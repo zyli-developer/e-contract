@@ -1,0 +1,7 @@
+dist/
+node_modules/
+.temp/
+.swc/
+.DS_Store
+*.log
+pnpm-lock.yaml

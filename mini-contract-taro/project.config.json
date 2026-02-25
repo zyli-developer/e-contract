@@ -1,0 +1,17 @@
+{
+  "miniprogramRoot": "dist/",
+  "projectname": "mini-contract-taro",
+  "description": "Mini Contract Pro - 电子合同微信小程序",
+  "appid": "wx22db0d6ebe81e2ee",
+  "setting": {
+    "urlCheck": false,
+    "es6": false,
+    "enhance": false,
+    "compileHotReLoad": false,
+    "postcss": false,
+    "minified": false,
+    "bigPackageSizeSupport": true
+  },
+  "compileType": "miniprogram",
+  "condition": {}
+}

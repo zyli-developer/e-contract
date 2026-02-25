@@ -1,0 +1,10 @@
+import { View, Text } from '@tarojs/components'
+import './index.scss'
+
+export default function IndexPage() {
+  return (
+    <View className="index-page">
+      <Text>首页</Text>
+    </View>
+  )
+}
