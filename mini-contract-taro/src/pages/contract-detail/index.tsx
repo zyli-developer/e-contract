@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import Taro, { useRouter } from '@tarojs/taro'
 import { View, Text } from '@tarojs/components'
 import { Button, Cell } from '@nutui/nutui-react-taro'
+import { useRequireAuth } from '@/hooks/useAuth'
 import {
   getContractDetail,
   cancelContract,
@@ -9,6 +10,7 @@ import {
   initiateSign,
   getEvidence,
   urgeSign,
+  downloadContract,
 } from '@/api/contracts'
 import './index.scss'
 
@@ -34,6 +36,7 @@ const ACTION_LABEL: Record<string, string> = {
 }
 
 export default function ContractDetailPage() {
+  useRequireAuth()
   const router = useRouter()
   const contractId = Number(router.params.id)
   const [detail, setDetail] = useState<any>(null)
@@ -114,6 +117,21 @@ export default function ContractDetailPage() {
     }
   }
 
+  const handleDownload = async () => {
+    try {
+      const data = await downloadContract(contractId)
+      const fileUrl = data?.signed_file_url || data?.file_url
+      if (fileUrl) {
+        await Taro.downloadFile({ url: fileUrl })
+        Taro.showToast({ title: '下载成功', icon: 'success' })
+      } else {
+        Taro.showToast({ title: '暂无可下载文件', icon: 'none' })
+      }
+    } catch (e: any) {
+      Taro.showToast({ title: e.message || '下载失败', icon: 'none' })
+    }
+  }
+
   if (!detail) {
     return <View className='contract-detail'><Text>加载中...</Text></View>
   }
@@ -189,6 +207,9 @@ export default function ContractDetailPage() {
         )}
         {detail.status === 2 && (
           <Button block onClick={handleUrge}>催签</Button>
+        )}
+        {detail.status === 3 && (
+          <Button type='primary' block onClick={handleDownload}>下载合同</Button>
         )}
         {detail.status <= 2 && (
           <Button block onClick={handleCancel} className='cancel-btn'>取消合同</Button>

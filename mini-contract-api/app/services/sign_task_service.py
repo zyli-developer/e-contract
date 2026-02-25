@@ -250,6 +250,27 @@ async def delete_task(db: AsyncSession, task_id: int, user_id: int) -> None:
     await db.flush()
 
 
+async def get_download_url(db: AsyncSession, task_id: int, user_id: int) -> dict:
+    """获取已签署合同的下载 URL"""
+    task = await _get_task(db, task_id)
+    if task.status != 3:
+        raise BusinessException(code=400, msg="合同未完成签署，无法下载")
+
+    # 只有创建者或签署方可下载
+    is_creator = task.creator_id == user_id
+    participant = await _find_participant_by_user(db, task_id, user_id)
+    if not is_creator and not participant:
+        raise ForbiddenException("无权下载此合同")
+
+    return {
+        "task_id": task_id,
+        "name": task.name,
+        "file_url": task.file_url,
+        "signed_file_url": task.signed_file_url or task.file_url,
+        "signed_file_hash": task.signed_file_hash,
+    }
+
+
 # ==============================
 # Phase 4: 签署流程
 # ==============================

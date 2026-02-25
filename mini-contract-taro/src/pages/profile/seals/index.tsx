@@ -2,6 +2,7 @@ import { useState } from 'react'
 import Taro, { useDidShow } from '@tarojs/taro'
 import { View, Text } from '@tarojs/components'
 import { Button, Empty } from '@nutui/nutui-react-taro'
+import { useRequireAuth } from '@/hooks/useAuth'
 import { getSealList, deleteSeal, setDefaultSeal } from '@/api/seals'
 import './index.scss'
 
@@ -14,6 +15,7 @@ interface SealItem {
 }
 
 export default function SealsPage() {
+  useRequireAuth()
   const [seals, setSeals] = useState<SealItem[]>([])
   const [loading, setLoading] = useState(false)
 

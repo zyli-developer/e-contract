@@ -27,7 +27,8 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title=settings.APP_NAME,
-    version="0.1.0",
+    description="Mini Contract Pro - 电子合同签署平台 API。支持用户认证、签名管理、合同模板、合同签署（含意愿验证）、证据链追踪。",
+    version="1.0.0",
     lifespan=lifespan,
 )
 

@@ -244,6 +244,17 @@ async def validate_permission(
     return ApiResponse.success(data=result)
 
 
+@router.get("/{task_id}/download")
+async def download_contract(
+    task_id: int,
+    user_id: int = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """下载已签署合同文件"""
+    result = await sign_task_service.get_download_url(db, task_id, user_id)
+    return ApiResponse.success(data=result)
+
+
 @router.post("/{task_id}/urge")
 async def urge_sign(
     task_id: int,

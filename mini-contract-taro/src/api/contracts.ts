@@ -74,3 +74,8 @@ export function verifyHash(id: string | number) {
 export function validatePermission(id: string | number) {
   return request({ url: `/seal/sign-task/validate-permission?id=${id}` })
 }
+
+/** 下载已签署合同 */
+export function downloadContract(id: string | number) {
+  return request({ url: `/seal/sign-task/${id}/download` })
+}

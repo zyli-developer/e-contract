@@ -10,12 +10,14 @@ import {
   executeSign,
   rejectSign,
 } from '@/api/contracts'
+import { useRequireAuth } from '@/hooks/useAuth'
 import { useAuthStore } from '@/store/useAuthStore'
 import './index.scss'
 
 type Step = 'info' | 'verify' | 'signing' | 'result'
 
 export default function ContractSignPage() {
+  useRequireAuth()
   const router = useRouter()
   const contractId = Number(router.params.id)
   const { token } = useAuthStore()

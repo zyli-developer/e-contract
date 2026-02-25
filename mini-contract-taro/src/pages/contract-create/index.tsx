@@ -2,6 +2,7 @@ import { useState } from 'react'
 import Taro from '@tarojs/taro'
 import { View, Text } from '@tarojs/components'
 import { Button, Input } from '@nutui/nutui-react-taro'
+import { useRequireAuth } from '@/hooks/useAuth'
 import { createContract } from '@/api/contracts'
 import './index.scss'
 
@@ -12,6 +13,7 @@ interface Participant {
 }
 
 export default function ContractCreatePage() {
+  useRequireAuth()
   const [name, setName] = useState('')
   const [remark, setRemark] = useState('')
   const [participants, setParticipants] = useState<Participant[]>([])

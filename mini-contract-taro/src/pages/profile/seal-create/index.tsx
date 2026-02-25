@@ -2,10 +2,12 @@ import { useState, useRef } from 'react'
 import Taro from '@tarojs/taro'
 import { View, Text, Canvas } from '@tarojs/components'
 import { Button, Tabs, Radio } from '@nutui/nutui-react-taro'
+import { useRequireAuth } from '@/hooks/useAuth'
 import { createSeal } from '@/api/seals'
 import './index.scss'
 
 export default function SealCreatePage() {
+  useRequireAuth()
   const [activeTab, setActiveTab] = useState(0)
   const [sealType, setSealType] = useState(11) // 11=签名 12=印章
   const [loading, setLoading] = useState(false)

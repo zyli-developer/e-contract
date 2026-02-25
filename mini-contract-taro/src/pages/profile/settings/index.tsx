@@ -2,12 +2,14 @@ import { useState } from 'react'
 import Taro from '@tarojs/taro'
 import { View, Text } from '@tarojs/components'
 import { Input, Button, Cell } from '@nutui/nutui-react-taro'
+import { useRequireAuth } from '@/hooks/useAuth'
 import { useAuthStore } from '@/store/useAuthStore'
 import { updateUserInfo, updatePassword } from '@/api/member'
 import { sendSmsCode } from '@/api/auth'
 import './index.scss'
 
 export default function SettingsPage() {
+  useRequireAuth()
   const { userInfo, setUserInfo } = useAuthStore()
   const [nickname, setNickname] = useState(userInfo?.nickname || '')
   const [showPasswordForm, setShowPasswordForm] = useState(false)
