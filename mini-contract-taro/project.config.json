@@ -2,7 +2,7 @@
   "miniprogramRoot": "dist/",
   "projectname": "mini-contract-taro",
   "description": "Mini Contract Pro - 电子合同微信小程序",
-  "appid": "wx22db0d6ebe81e2ee",
+  "appid": "wxa6f9e48551b60c87",
   "setting": {
     "urlCheck": false,
     "es6": false,
@@ -10,8 +10,32 @@
     "compileHotReLoad": false,
     "postcss": false,
     "minified": false,
-    "bigPackageSizeSupport": true
+    "bigPackageSizeSupport": true,
+    "compileWorklet": false,
+    "uglifyFileName": false,
+    "uploadWithSourceMap": true,
+    "packNpmManually": false,
+    "packNpmRelationList": [],
+    "minifyWXSS": true,
+    "minifyWXML": true,
+    "localPlugins": false,
+    "disableUseStrict": false,
+    "useCompilerPlugins": false,
+    "condition": false,
+    "swc": false,
+    "disableSWC": true,
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "outputPath": ""
+    }
   },
   "compileType": "miniprogram",
-  "condition": {}
+  "condition": {},
+  "simulatorPluginLibVersion": {},
+  "packOptions": {
+    "ignore": [],
+    "include": []
+  },
+  "editorSetting": {}
 }

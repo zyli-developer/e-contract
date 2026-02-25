@@ -19,10 +19,10 @@ passlib[bcrypt]>=1.7.4
 httpx>=0.27.0
 
 # 微信 SDK
-wechatpy>=2.1.0
+wechatpy
 
 # 文件存储
-python-minio>=7.2.0
+minio>=7.2.0
 
 # 数据校验
 pydantic>=2.0.0

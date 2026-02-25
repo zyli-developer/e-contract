@@ -23,33 +23,48 @@
   ],
   "author": "",
   "dependencies": {
+    "@nutui/icons-react-taro": "^1.0.0",
+    "@nutui/nutui-react-taro": "^2.6.0",
     "@tarojs/cli": "4.x",
     "@tarojs/components": "4.x",
     "@tarojs/helper": "4.x",
     "@tarojs/plugin-framework-react": "4.x",
-    "@tarojs/plugin-platform-weapp": "4.x",
     "@tarojs/plugin-platform-h5": "4.x",
+    "@tarojs/plugin-platform-weapp": "4.x",
     "@tarojs/react": "4.x",
     "@tarojs/runtime": "4.x",
     "@tarojs/shared": "4.x",
     "@tarojs/taro": "4.x",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
-    "zustand": "^4.5.0",
-    "@nutui/nutui-react-taro": "^2.6.0",
-    "@nutui/icons-react-taro": "^1.0.0"
+    "zustand": "^4.5.0"
   },
   "devDependencies": {
+    "@babel/preset-react": "^7.28.5",
+    "@babel/preset-typescript": "^7.28.5",
     "@babel/runtime": "^7.24.0",
     "@tarojs/webpack5-runner": "4.x",
+    "@testing-library/jest-dom": "^6.4.0",
+    "@testing-library/react": "^16.0.0",
+    "@types/node": "^25.3.0",
     "@types/react": "^18.3.0",
     "babel-preset-taro": "4.x",
+    "jest": "^29.7.0",
+    "msw": "^2.3.0",
     "postcss": "^8.4.0",
     "sass": "^1.77.0",
-    "typescript": "^5.5.0",
-    "jest": "^29.7.0",
-    "@testing-library/react": "^16.0.0",
-    "@testing-library/jest-dom": "^6.4.0",
-    "msw": "^2.3.0"
+    "typescript": "^5.5.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@tarojs/cli",
+      "@tarojs/binding",
+      "@swc/core",
+      "esbuild",
+      "@parcel/watcher",
+      "core-js",
+      "core-js-pure",
+      "msw"
+    ]
   }
 }

@@ -1,4 +1,4 @@
-from typing import Any, Generic, Optional, TypeVar
+from typing import Any, Generic, List, Optional, TypeVar
 
 from pydantic import BaseModel
 
@@ -22,7 +22,7 @@ class ApiResponse(BaseModel, Generic[T]):
 
 class PageResult(BaseModel, Generic[T]):
     """分页响应格式"""
-    list: list[T] = []
+    list: List[T] = []
     total: int = 0
     pageNo: int = 1
     pageSize: int = 10
