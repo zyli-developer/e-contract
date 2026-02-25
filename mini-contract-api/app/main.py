@@ -20,6 +20,8 @@ async def lifespan(app: FastAPI):
     await init_db()
     yield
     # 关闭时：释放连接池
+    from app.utils.redis_client import close_redis
+    await close_redis()
     await engine.dispose()
 
 

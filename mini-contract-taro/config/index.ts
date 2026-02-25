@@ -1,3 +1,4 @@
+import path from 'path'
 import { defineConfig } from '@tarojs/cli'
 import devConfig from './dev'
 import prodConfig from './prod'
@@ -7,6 +8,9 @@ export default defineConfig(async (merge) => {
     projectName: 'mini-contract-taro',
     date: '2026-02-25',
     designWidth: 750,
+    alias: {
+      '@': path.resolve(__dirname, '..', 'src'),
+    },
     deviceRatio: {
       640: 2.34 / 2,
       750: 1,

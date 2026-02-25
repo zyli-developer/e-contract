@@ -78,7 +78,7 @@ async function refreshTokenRequest() {
   if (!refreshToken) throw new Error('No refresh token')
 
   const res = await Taro.request<ApiResponse>({
-    url: `${BASE_URL}/api/v1/member/auth/refresh-token`,
+    url: `${BASE_URL}/member/auth/refresh-token`,
     method: 'POST',
     header: {
       'Content-Type': 'application/json',

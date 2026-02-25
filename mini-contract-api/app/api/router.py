@@ -1,8 +1,9 @@
 from fastapi import APIRouter
 
 from app.api.v1 import auth, file, member, seal_info, seal_template, sign_task
+from app.config import settings
 
-api_router = APIRouter(prefix="/api/v1")
+api_router = APIRouter(prefix=settings.API_PREFIX)
 
 # 认证模块
 api_router.include_router(auth.router)
