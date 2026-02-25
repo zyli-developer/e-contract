@@ -1,0 +1,90 @@
+.seals-page {
+  min-height: 100vh;
+  background: #f5f5f5;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 32px;
+  background: #fff;
+}
+
+.title {
+  font-size: 32px;
+  font-weight: bold;
+  color: #333;
+}
+
+.seal-list {
+  padding: 20px 32px;
+}
+
+.seal-item {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 16px;
+}
+
+.seal-preview {
+  width: 100px;
+  height: 100px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.seal-image {
+  width: 100%;
+  height: 100%;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.seal-info {
+  flex: 1;
+  margin-left: 20px;
+}
+
+.seal-name {
+  display: block;
+  font-size: 28px;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.default-tag {
+  display: inline-block;
+  font-size: 20px;
+  color: #00C28A;
+  border: 1px solid #00C28A;
+  border-radius: 4px;
+  padding: 0 8px;
+  margin-left: 8px;
+}
+
+.seal-type {
+  font-size: 24px;
+  color: #999;
+}
+
+.seal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.action-btn {
+  font-size: 24px;
+  color: #00C28A;
+
+  &.delete {
+    color: #ff4d4f;
+  }
+}

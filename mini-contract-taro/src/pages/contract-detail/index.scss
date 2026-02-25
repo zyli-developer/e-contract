@@ -1,0 +1,90 @@
+.contract-detail {
+  min-height: 100vh;
+  background: #f5f5f5;
+}
+
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 32px;
+  background: #fff;
+}
+
+.detail-name {
+  font-size: 36px;
+  font-weight: bold;
+  color: #333;
+  flex: 1;
+}
+
+.detail-status {
+  font-size: 28px;
+  flex-shrink: 0;
+  margin-left: 16px;
+}
+
+.info-section {
+  background: #fff;
+  margin-top: 20px;
+}
+
+.participants-section {
+  background: #fff;
+  margin-top: 20px;
+  padding: 24px 32px;
+}
+
+.section-title {
+  display: block;
+  font-size: 30px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 16px;
+}
+
+.participant-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.p-info {
+  flex: 1;
+}
+
+.p-name {
+  display: block;
+  font-size: 28px;
+  color: #333;
+}
+
+.p-mobile {
+  display: block;
+  font-size: 24px;
+  color: #999;
+  margin-top: 4px;
+}
+
+.p-status {
+  font-size: 26px;
+  color: #00C28A;
+  flex-shrink: 0;
+}
+
+.action-section {
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cancel-btn {
+  color: #fa8c16;
+}
+
+.delete-btn {
+  color: #ff4d4f;
+}

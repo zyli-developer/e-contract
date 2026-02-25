@@ -1,0 +1,115 @@
+.contract-create {
+  min-height: 100vh;
+  background: #f5f5f5;
+  padding-bottom: 120px;
+}
+
+.section {
+  background: #fff;
+  padding: 24px 32px;
+  margin-bottom: 20px;
+}
+
+.section-title {
+  display: block;
+  font-size: 30px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 16px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.create-options {
+  display: flex;
+  gap: 20px;
+}
+
+.option-card {
+  flex: 1;
+  text-align: center;
+  padding: 32px 16px;
+  border: 2px solid #eee;
+  border-radius: 12px;
+
+  &.active {
+    border-color: #00C28A;
+    background: #f0faf6;
+  }
+}
+
+.option-icon {
+  display: block;
+  font-size: 48px;
+  font-weight: bold;
+  color: #00C28A;
+  margin-bottom: 12px;
+}
+
+.option-label {
+  font-size: 26px;
+  color: #333;
+}
+
+.form-item {
+  padding: 16px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.form-label {
+  display: block;
+  font-size: 28px;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.required {
+  color: #ff4d4f;
+}
+
+.participant-card {
+  padding: 16px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.participant-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.participant-num {
+  font-size: 28px;
+  font-weight: bold;
+  color: #333;
+}
+
+.remove-btn {
+  font-size: 24px;
+  color: #ff4d4f;
+}
+
+.empty-hint {
+  display: block;
+  text-align: center;
+  font-size: 26px;
+  color: #999;
+  padding: 32px 0;
+}
+
+.bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 16px 32px;
+  background: #fff;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.06);
+}
