@@ -1,0 +1,123 @@
+"""{{ resource_name }} API 测试"""
+from fastapi import status
+import pytest
+
+from app import crud, schemas
+
+
+class Test{{ model_name }}API:
+    """{{ model_name }} API 集成测试"""
+
+    def test_create_{{ resource_name }}_success(self, client{% if sample_data %}, sample_{{ resource_name }}_data{% endif %}):
+        """测试创建 {{ resource_name }} - 成功"""
+        response = client.post("{{ base_path }}", json=sample_{{ resource_name }}_data)
+
+        assert response.status_code == status.HTTP_201_CREATED
+        data = response.json()
+        {% for field in required_fields %}assert data["{{ field }}"] == sample_{{ resource_name }}_data["{{ field }}"]
+        {% endfor %}assert "id" in data
+        {% if has_timestamps %}assert "created_at" in data
+        {% endif %}
+
+    def test_create_{{ resource_name }}_invalid_data(self, client):
+        """测试创建 {{ resource_name }} - 无效数据"""
+        response = client.post(
+            "{{ base_path }}",
+            json={}  # 空数据
+        )
+
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    {% if has_unique_field %}def test_create_{{ resource_name }}_duplicate(self, client, create_sample_{{ resource_name }}, sample_{{ resource_name }}_data):
+        """测试创建 {{ resource_name }} - 重复 {{ unique_field }}"""
+        response = client.post("{{ base_path }}", json=sample_{{ resource_name }}_data)
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+    {% endif %}
+
+    def test_get_{{ resource_name }}_success(self, client, create_sample_{{ resource_name }}):
+        """测试获取 {{ resource_name }} - 成功"""
+        item = create_sample_{{ resource_name }}
+        response = client.get(f"{{ base_path }}/{item.id}")
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data["id"] == item.id
+
+    def test_get_{{ resource_name }}_not_found(self, client):
+        """测试获取 {{ resource_name }} - 不存在"""
+        response = client.get("{{ base_path }}/99999")
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert "not found" in response.json()["detail"].lower()
+
+    def test_get_{{ resource_name }}_list(self, client, db):
+        """测试获取 {{ resource_name }} 列表"""
+        # 创建多个 {{ resource_name }}
+        for i in range(5):
+            crud.{{ crud_name }}.create(
+                db,
+                obj_in=schemas.{{ model_name }}Create(
+                    {% for field in create_fields %}{{ field.name }}={% if field.is_string %}f"{{ field.example }}{i}"{% else %}{{ field.example }}{% endif %},
+                    {% endfor %}
+                )
+            )
+
+        response = client.get("{{ base_path }}")
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert len(data) >= 5
+
+    def test_get_{{ resource_name }}_pagination(self, client, db):
+        """测试分页"""
+        # 创建 10 个 {{ resource_name }}
+        for i in range(10):
+            crud.{{ crud_name }}.create(
+                db,
+                obj_in=schemas.{{ model_name }}Create(
+                    {% for field in create_fields %}{{ field.name }}={% if field.is_string %}f"{{ field.example }}{i}"{% else %}{{ field.example }}{% endif %},
+                    {% endfor %}
+                )
+            )
+
+        response = client.get("{{ base_path }}?skip=5&limit=3")
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert len(data) == 3
+
+    def test_update_{{ resource_name }}_success(self, client, create_sample_{{ resource_name }}):
+        """测试更新 {{ resource_name }} - 成功"""
+        item = create_sample_{{ resource_name }}
+        update_data = {{% if update_example %}"{{ update_example.field }}": "{{ update_example.value }}"{% endif %}}
+
+        response = client.put(f"{{ base_path }}/{item.id}", json=update_data)
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        {% if update_example %}assert data["{{ update_example.field }}"] == "{{ update_example.value }}"
+        {% endif %}
+
+    def test_update_{{ resource_name }}_not_found(self, client):
+        """测试更新 {{ resource_name }} - 不存在"""
+        response = client.put("{{ base_path }}/99999", json={})
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_delete_{{ resource_name }}_success(self, client, create_sample_{{ resource_name }}):
+        """测试删除 {{ resource_name }} - 成功"""
+        item = create_sample_{{ resource_name }}
+
+        response = client.delete(f"{{ base_path }}/{item.id}")
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+
+        # 验证已删除
+        get_response = client.get(f"{{ base_path }}/{item.id}")
+        assert get_response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_delete_{{ resource_name }}_not_found(self, client):
+        """测试删除 {{ resource_name }} - 不存在"""
+        response = client.delete("{{ base_path }}/99999")
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND

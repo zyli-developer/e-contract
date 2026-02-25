@@ -1,0 +1,22 @@
+"""{{ resource_name }} 测试 fixtures"""
+import pytest
+from app import crud, schemas
+
+
+@pytest.fixture
+def sample_{{ resource_name }}_data():
+    """示例 {{ resource_name }} 数据"""
+    return {
+        {% for field in fields %}"{{ field.name }}": {{ field.value }},
+        {% endfor %}
+    }
+
+
+@pytest.fixture
+def create_sample_{{ resource_name }}(db, sample_{{ resource_name }}_data):
+    """创建示例 {{ resource_name }}（fixture）"""
+    item = crud.{{ crud_name }}.create(
+        db,
+        obj_in=schemas.{{ model_name }}Create(**sample_{{ resource_name }}_data)
+    )
+    return item

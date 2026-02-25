@@ -1,0 +1,59 @@
+"""{{ resource_name }} API 路由"""
+from fastapi import APIRouter, Depends, HTTPException, status{% if has_query_params %}, Query{% endif %}
+from sqlalchemy.orm import Session
+from typing import List{% if has_optional %}, Optional{% endif %}
+
+from app import crud, schemas
+from app.database import get_db
+
+router = APIRouter()
+
+{% for endpoint in endpoints %}
+@router.{{ endpoint.method }}("{{ endpoint.path }}"{% if endpoint.response_model %}, response_model={{ endpoint.response_model }}{% endif %}{% if endpoint.status_code %}, status_code=status.{{ endpoint.status_code }}{% endif %}{% if endpoint.tags %}, tags={{ endpoint.tags }}{% endif %})
+def {{ endpoint.function_name }}(
+    {% for param in endpoint.path_params %}{{ param.name }}: {{ param.type }},
+    {% endfor %}{% if endpoint.request_body %}{{ endpoint.request_body.name }}: schemas.{{ endpoint.request_body.type }},
+    {% endif %}{% for param in endpoint.query_params %}{{ param.name }}: {{ param.type }} = Query({{ param.default }}{% if param.ge is not none %}, ge={{ param.ge }}{% endif %}{% if param.le is not none %}, le={{ param.le }}{% endif %}),
+    {% endfor %}db: Session = Depends(get_db)
+) -> {% if endpoint.return_type %}{{ endpoint.return_type }}{% else %}Any{% endif %}:
+    """
+    {{ endpoint.description }}
+    {% if endpoint.summary %}
+    {{ endpoint.summary }}
+    {% endif %}
+    """
+    {% if endpoint.implementation %}{{ endpoint.implementation }}{% else %}# TODO: Implement {{ endpoint.function_name }}
+    {% if endpoint.method == 'get' and '{' not in endpoint.path %}# Get list
+    items = crud.{{ crud_name }}.get_multi(db, skip={{ endpoint.skip_var or '0' }}, limit={{ endpoint.limit_var or '100' }})
+    return items
+    {% elif endpoint.method == 'get' and endpoint.path_params %}# Get by ID
+    item = crud.{{ crud_name }}.get(db, id={{ endpoint.path_params[0].name }})
+    if item is None:
+        raise HTTPException(status_code=404, detail="{{ resource_name }} not found")
+    return item
+    {% elif endpoint.method == 'post' and endpoint.request_body %}# Create
+    item = crud.{{ crud_name }}.create(db, obj_in={{ endpoint.request_body.name }})
+    return item
+    {% elif endpoint.method == 'put' and endpoint.path_params %}# Update
+    item = crud.{{ crud_name }}.get(db, id={{ endpoint.path_params[0].name }})
+    if item is None:
+        raise HTTPException(status_code=404, detail="{{ resource_name }} not found")
+    item = crud.{{ crud_name }}.update(db, db_obj=item, obj_in={{ endpoint.request_body.name }})
+    return item
+    {% elif endpoint.method == 'patch' and endpoint.path_params %}# Partial update
+    item = crud.{{ crud_name }}.get(db, id={{ endpoint.path_params[0].name }})
+    if item is None:
+        raise HTTPException(status_code=404, detail="{{ resource_name }} not found")
+    item = crud.{{ crud_name }}.update(db, db_obj=item, obj_in={{ endpoint.request_body.name }})
+    return item
+    {% elif endpoint.method == 'delete' and endpoint.path_params %}# Delete
+    item = crud.{{ crud_name }}.get(db, id={{ endpoint.path_params[0].name }})
+    if item is None:
+        raise HTTPException(status_code=404, detail="{{ resource_name }} not found")
+    crud.{{ crud_name }}.remove(db, id={{ endpoint.path_params[0].name }})
+    return None
+    {% else %}# Batch or parameterless operation
+    pass
+    {% endif %}{% endif %}
+
+{% endfor %}

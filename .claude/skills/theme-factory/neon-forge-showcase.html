@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neon Forge / 霓虹锻造 — Theme Showcase</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --lime: #BBFD3B;
+    --mint: #74FFBB;
+    --cyan: #41FAF4;
+    --pink: #FF74A7;
+    --blue: #4C78FF;
+    --orange: #FB7A38;
+    --dark-bg: #222222;
+    --secondary-bg: #333333;
+    --surface: #181818;
+    --white: #FFFFFF;
+    --near-black: #00000E;
+    --muted: #8E8E8E;
+    --light-gray: #DCDCDC;
+    --success: #00B42A;
+    --error: #FA541C;
+    --warning: #FAAD14;
+    --light-green: #8AFF80;
+    --yellow: #F0FF31;
+    --purple: #E3B8FF;
+    --rose: #FBC2DA;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--surface);
+    color: var(--white);
+    font-family: 'Poppins', 'Noto Sans SC', -apple-system, 'PingFang SC', sans-serif;
+    line-height: 1.6;
+  }
+
+  .showcase {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 64px;
+  }
+
+  /* ---- HEADER ---- */
+  .header {
+    text-align: center;
+    margin-bottom: 80px;
+  }
+  .header .badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--near-black);
+    background: var(--lime);
+    padding: 6px 20px;
+    border-radius: 50px;
+    margin-bottom: 24px;
+  }
+  .header h1 {
+    font-size: 56px;
+    font-weight: 700;
+    letter-spacing: -1px;
+    margin-bottom: 6px;
+    background: linear-gradient(135deg, var(--lime), var(--cyan));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .header .cn-title {
+    font-size: 24px;
+    font-weight: 500;
+    color: var(--light-gray);
+    margin-bottom: 20px;
+    font-family: 'Noto Sans SC', 'PingFang SC', sans-serif;
+  }
+  .header p {
+    font-size: 16px;
+    color: var(--muted);
+    max-width: 680px;
+    margin: 0 auto;
+    line-height: 1.8;
+  }
+  .header p .cn {
+    display: block;
+    margin-top: 8px;
+    font-family: 'Noto Sans SC', 'PingFang SC', sans-serif;
+  }
+
+  /* ---- SECTION ---- */
+  .section {
+    margin-bottom: 64px;
+  }
+  .section-title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--lime);
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--secondary-bg);
+  }
+  .section-title .cn {
+    text-transform: none;
+    letter-spacing: 0;
+    font-family: 'Noto Sans SC', 'PingFang SC', sans-serif;
+    margin-left: 8px;
+    font-weight: 500;
+    color: var(--muted);
+  }
+
+  /* ---- COLOR PALETTE ---- */
+  .color-group-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--muted);
+    margin-bottom: 12px;
+    margin-top: 24px;
+  }
+  .color-group-label:first-child { margin-top: 0; }
+
+  .color-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+    gap: 16px;
+    margin-bottom: 8px;
+  }
+  .color-card {
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--dark-bg);
+  }
+  .color-swatch {
+    height: 80px;
+    position: relative;
+  }
+  .color-swatch.bordered {
+    border: 1px solid var(--secondary-bg);
+  }
+  .color-info {
+    padding: 12px;
+  }
+  .color-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--white);
+    margin-bottom: 2px;
+  }
+  .color-hex {
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--muted);
+    font-family: 'Poppins', monospace;
+  }
+  .color-use {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 4px;
+    opacity: 0.7;
+    line-height: 1.5;
+  }
+
+  /* ---- TYPOGRAPHY ---- */
+  .font-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-bottom: 32px;
+  }
+  .font-card {
+    background: var(--dark-bg);
+    border-radius: 12px;
+    padding: 28px;
+  }
+  .font-tag {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .font-preview {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 8px;
+  }
+  .font-sample {
+    font-size: 14px;
+    color: var(--light-gray);
+    margin-bottom: 6px;
+  }
+  .font-charset {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .type-scale {
+    background: var(--dark-bg);
+    border-radius: 12px;
+    padding: 32px;
+    margin-bottom: 24px;
+  }
+  .type-row {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .type-row:last-child { border-bottom: none; }
+  .type-size {
+    font-family: 'Poppins', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--lime);
+    width: 48px;
+    flex-shrink: 0;
+  }
+  .type-role {
+    font-size: 11px;
+    color: var(--muted);
+    width: 200px;
+    flex-shrink: 0;
+  }
+  .type-sample {
+    color: var(--white);
+  }
+
+  .weight-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
+  .weight-card {
+    background: var(--dark-bg);
+    border-radius: 12px;
+    padding: 24px;
+  }
+  .weight-label {
+    font-size: 11px;
+    color: var(--lime);
+    margin-bottom: 8px;
+    font-family: 'Poppins', monospace;
+  }
+  .weight-preview {
+    font-size: 22px;
+    color: var(--white);
+    line-height: 1.4;
+  }
+  .weight-cn {
+    font-family: 'Noto Sans SC', 'PingFang SC', sans-serif;
+  }
+
+  /* ---- SPACING & RADIUS ---- */
+  .tokens-row {
+    display: flex;
+    gap: 40px;
+    align-items: flex-end;
+    margin-bottom: 40px;
+  }
+  .token-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  .spacing-block {
+    background: var(--lime);
+    border-radius: 3px;
+  }
+  .token-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--white);
+    font-family: 'Poppins', monospace;
+  }
+  .token-var {
+    font-size: 10px;
+    color: var(--muted);
+    font-family: 'Poppins', monospace;
+  }
+  .token-desc {
+    font-size: 9px;
+    color: var(--muted);
+    opacity: 0.7;
+    text-align: center;
+    max-width: 80px;
+  }
+
+  .radius-row {
+    display: flex;
+    gap: 32px;
+    align-items: flex-end;
+  }
+  .radius-box {
+    width: 72px;
+    height: 72px;
+    background: var(--secondary-bg);
+    border: 2px solid var(--lime);
+  }
+
+  /* ---- COMPONENT PREVIEW ---- */
+  .preview-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  .preview-card {
+    background: var(--dark-bg);
+    border-radius: 16px;
+    padding: 32px;
+  }
+  .preview-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+
+  /* Buttons */
+  .btn-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 20px;
+    border-radius: 21px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'Poppins', 'Noto Sans SC', sans-serif;
+    border: none;
+    cursor: pointer;
+  }
+  .btn-primary { background: var(--lime); color: var(--near-black); }
+  .btn-secondary { background: var(--secondary-bg); color: var(--white); border: 1px solid var(--muted); }
+  .btn-accent { background: var(--cyan); color: var(--near-black); }
+  .btn-danger { background: var(--error); color: var(--white); }
+  .btn-ghost { background: transparent; color: var(--lime); border: 1.5px solid var(--lime); }
+  .btn-pill { border-radius: 50px; padding: 6px 16px; font-size: 12px; font-weight: 700; }
+  .btn-pink { background: var(--pink); color: var(--near-black); }
+  .btn-blue { background: var(--blue); color: var(--white); }
+
+  /* Tags */
+  .tag-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: 21px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .tag-lime { background: var(--lime); color: var(--near-black); }
+  .tag-mint { background: var(--mint); color: var(--near-black); }
+  .tag-pink { background: var(--pink); color: var(--near-black); }
+  .tag-blue { background: var(--blue); color: var(--white); }
+  .tag-orange { background: var(--orange); color: var(--white); }
+  .tag-dark { background: var(--secondary-bg); color: var(--white); border: 1px solid rgba(255,255,255,0.1); }
+
+  /* Input */
+  .input-mock {
+    display: flex;
+    align-items: center;
+    background: var(--secondary-bg);
+    border-radius: 21px;
+    padding: 8px 16px;
+    gap: 8px;
+    width: 100%;
+    margin-bottom: 12px;
+  }
+  .input-mock .placeholder { color: var(--muted); font-size: 14px; flex: 1; }
+  .input-mock .icon { color: var(--muted); font-size: 16px; }
+
+  /* Card mock */
+  .card-mock {
+    background: var(--secondary-bg);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 12px;
+  }
+  .card-mock h4 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  .card-mock p { font-size: 12px; color: var(--muted); }
+  .card-mock .card-footer { display: flex; gap: 8px; margin-top: 12px; }
+
+  /* Gradient bar */
+  .gradient-bar {
+    height: 6px;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--lime), var(--mint), var(--cyan), var(--blue), var(--pink), var(--orange));
+    margin: 48px 0;
+  }
+
+  /* Use case */
+  .use-case-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+  .use-case {
+    background: var(--dark-bg);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+  }
+  .use-case .icon-large { font-size: 28px; margin-bottom: 8px; }
+  .use-case .en { font-size: 12px; font-weight: 600; color: var(--white); margin-bottom: 2px; }
+  .use-case .cn { font-size: 11px; color: var(--muted); font-family: 'Noto Sans SC', sans-serif; }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    padding: 48px 0 32px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .footer strong { color: var(--lime); }
+
+  @media print {
+    body { background: #111; }
+    .showcase { padding: 32px; }
+  }
+</style>
+</head>
+<body>
+<div class="showcase">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="badge">Theme Showcase / 主题展示</div>
+    <h1>Neon Forge</h1>
+    <div class="cn-title">霓虹锻造</div>
+    <p>
+      A vibrant, high-energy dark theme with electric neon accents, designed for the Synnovator creative collaboration platform.
+      <span class="cn">高能量暗色主题，以明亮霓虹色为点缀，专为协创者 (Synnovator) 创意协作平台设计。</span>
+    </p>
+  </div>
+
+  <div class="gradient-bar"></div>
+
+  <!-- ================================ -->
+  <!-- COLOR PALETTE -->
+  <!-- ================================ -->
+  <div class="section">
+    <div class="section-title">01 / Color Palette <span class="cn">色彩体系</span></div>
+
+    <div class="color-group-label">Brand Colors / 品牌色</div>
+    <div class="color-grid">
+      <div class="color-card">
+        <div class="color-swatch" style="background:#BBFD3B"></div>
+        <div class="color-info">
+          <div class="color-name">Lime Green / 亮绿</div>
+          <div class="color-hex">#BBFD3B</div>
+          <div class="color-use">Primary / 主色 — CTAs, highlights<br>行动按钮，高亮</div>
+        </div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#74FFBB"></div>
+        <div class="color-info">
+          <div class="color-name">Mint / 薄荷绿</div>
+          <div class="color-hex">#74FFBB</div>
+          <div class="color-use">Secondary / 辅助色<br>成功状态，标签</div>
+        </div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#41FAF4"></div>
+        <div class="color-info">
+          <div class="color-name">Cyan / 青色</div>
+          <div class="color-hex">#41FAF4</div>
+          <div class="color-use">Tertiary / 第三色<br>链接，交互元素</div>
+        </div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#FF74A7"></div>
+        <div class="color-info">
+          <div class="color-name">Pink / 粉色</div>
+          <div class="color-hex">#FF74A7</div>
+          <div class="color-use">Feature cards, alerts<br>功能卡片，提醒</div>
+        </div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#4C78FF"></div>
+        <div class="color-info">
+          <div class="color-name">Blue / 蓝色</div>
+          <div class="color-hex">#4C78FF</div>
+          <div class="color-use">Info, official badges<br>信息状态，官方徽章</div>
+        </div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#FB7A38"></div>
+        <div class="color-info">
+          <div class="color-name">Orange / 橙色</div>
+          <div class="color-hex">#FB7A38</div>
+          <div class="color-use">Hot/trending<br>热门/趋势指示</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="color-group-label">Neutral Colors / 中性色</div>
+    <div class="color-grid">
+      <div class="color-card">
+        <div class="color-swatch bordered" style="background:#181818"></div>
+        <div class="color-info">
+          <div class="color-name">Surface / 底层</div>
+          <div class="color-hex">#181818</div>
+          <div class="color-use">Deepest background<br>最深背景层</div>
+        </div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch bordered" style="background:#222222"></div>
+        <div class="color-info">
+          <div class="color-name">Dark BG / 深色背景</div>
+          <div class="color-hex">#222222</div>
+          <div class="color-use">Primary background<br>主要背景</div>
+        </div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#333333"></div>
+        <div class="color-info">
+          <div class="color-name">Secondary / 次级</div>
+          <div class="color-hex">#333333</div>
+          <div class="color-use">Cards, panels<br>卡片，面板</div>
+        </div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#8E8E8E"></div>
+        <div class="color-info">
+          <div class="color-name">Muted / 灰色</div>
+          <div class="color-hex">#8E8E8E</div>
+          <div class="color-use">Secondary text<br>次要文字</div>
+        </div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#DCDCDC"></div>
+        <div class="color-info">
+          <div class="color-name">Light Gray / 浅灰</div>
+          <div class="color-hex">#DCDCDC</div>
+          <div class="color-use">Subtle text<br>弱化文字</div>
+        </div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#FFFFFF"></div>
+        <div class="color-info">
+          <div class="color-name">White / 白色</div>
+          <div class="color-hex">#FFFFFF</div>
+          <div class="color-use">Primary text<br>主要文字</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="color-group-label">Semantic Colors / 语义色</div>
+    <div class="color-grid">
+      <div class="color-card">
+        <div class="color-swatch" style="background:#00B42A"></div>
+        <div class="color-info">
+          <div class="color-name">Success / 成功</div>
+          <div class="color-hex">#00B42A</div>
+          <div class="color-use">Positive feedback / 正向反馈</div>
+        </div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#FA541C"></div>
+        <div class="color-info">
+          <div class="color-name">Error / 错误</div>
+          <div class="color-hex">#FA541C</div>
+          <div class="color-use">Destructive actions / 危险操作</div>
+        </div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#FAAD14"></div>
+        <div class="color-info">
+          <div class="color-name">Warning / 警告</div>
+          <div class="color-hex">#FAAD14</div>
+          <div class="color-use">Caution / 注意提示</div>
+        </div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#165DFF"></div>
+        <div class="color-info">
+          <div class="color-name">Info / 信息</div>
+          <div class="color-hex">#165DFF</div>
+          <div class="color-use">Informational / 信息提示</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="color-group-label">Accent Colors / 点缀色</div>
+    <div class="color-grid">
+      <div class="color-card">
+        <div class="color-swatch" style="background:#8AFF80"></div>
+        <div class="color-info">
+          <div class="color-name">Light Green / 亮绿</div>
+          <div class="color-hex">#8AFF80</div>
+        </div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#F0FF31"></div>
+        <div class="color-info">
+          <div class="color-name">Yellow / 亮黄</div>
+          <div class="color-hex">#F0FF31</div>
+        </div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#E3B8FF"></div>
+        <div class="color-info">
+          <div class="color-name">Purple / 紫色</div>
+          <div class="color-hex">#E3B8FF</div>
+        </div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#FBC2DA"></div>
+        <div class="color-info">
+          <div class="color-name">Rose / 玫红</div>
+          <div class="color-hex">#FBC2DA</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="gradient-bar"></div>
+
+  <!-- ================================ -->
+  <!-- TYPOGRAPHY -->
+  <!-- ================================ -->
+  <div class="section">
+    <div class="section-title">02 / Typography <span class="cn">字体体系</span></div>
+
+    <div class="color-group-label">Font Families / 字体族</div>
+    <div class="font-cards">
+      <div class="font-card">
+        <div class="font-tag" style="color:var(--lime)">PRIMARY / 主字体</div>
+        <div class="font-preview">OPPOSans</div>
+        <div class="font-sample">协创者平台 — 让创意连接世界</div>
+        <div class="font-sample">Synnovator — Connect Ideas</div>
+        <div class="font-charset">ABCDEFGHIJKLMNOPQRSTUVWXYZ</div>
+        <div class="font-charset">0123456789 !@#$%^&*()</div>
+      </div>
+      <div class="font-card">
+        <div class="font-tag" style="color:var(--cyan)">SECONDARY / 辅助字体</div>
+        <div class="font-preview" style="font-family:'Noto Sans SC',sans-serif">思源黑体</div>
+        <div class="font-sample" style="font-family:'Noto Sans SC',sans-serif">Source Han Sans SC</div>
+        <div class="font-sample" style="font-family:'Noto Sans SC',sans-serif">现代无衬线中文字体</div>
+        <div class="font-charset" style="font-family:'Noto Sans SC',sans-serif">ABCDEFGHIJKLMNOPQRSTUVWXYZ</div>
+        <div class="font-charset" style="font-family:'Noto Sans SC',sans-serif">0123456789 !@#$%^&*()</div>
+      </div>
+      <div class="font-card">
+        <div class="font-tag" style="color:var(--pink)">MONO / 数字与代码</div>
+        <div class="font-preview" style="font-family:Poppins">Poppins</div>
+        <div class="font-sample" style="font-family:Poppins">The quick brown fox jumps</div>
+        <div class="font-sample" style="font-family:Poppins">Numbers & Code / 数字与代码</div>
+        <div class="font-charset" style="font-family:Poppins">ABCDEFGHIJKLMNOPQRSTUVWXYZ</div>
+        <div class="font-charset" style="font-family:Poppins">0123456789 !@#$%^&*()</div>
+      </div>
+    </div>
+
+    <div class="color-group-label">Type Scale / 字号体系</div>
+    <div class="type-scale">
+      <div class="type-row">
+        <div class="type-size">24px</div>
+        <div class="type-role">Heading / 标题文字</div>
+        <div class="type-sample" style="font-size:24px;font-weight:700">协创者 Synnovator</div>
+      </div>
+      <div class="type-row">
+        <div class="type-size">20px</div>
+        <div class="type-role">Subheading / 副标题</div>
+        <div class="type-sample" style="font-size:20px;font-weight:700">协创者 Synnovator</div>
+      </div>
+      <div class="type-row">
+        <div class="type-size">18px</div>
+        <div class="type-role">Section Title / 区块标题</div>
+        <div class="type-sample" style="font-size:18px;font-weight:500">协创者 Synnovator</div>
+      </div>
+      <div class="type-row">
+        <div class="type-size">16px</div>
+        <div class="type-role">Body Large / 正文大字</div>
+        <div class="type-sample" style="font-size:16px">协创者 Synnovator</div>
+      </div>
+      <div class="type-row">
+        <div class="type-size">14px</div>
+        <div class="type-role">Body / 正文</div>
+        <div class="type-sample" style="font-size:14px">协创者 Synnovator</div>
+      </div>
+      <div class="type-row">
+        <div class="type-size">12px</div>
+        <div class="type-role">Caption / 说明文字</div>
+        <div class="type-sample" style="font-size:12px;color:var(--light-gray)">协创者 Synnovator</div>
+      </div>
+      <div class="type-row">
+        <div class="type-size">10px</div>
+        <div class="type-role">Overline / 小标注</div>
+        <div class="type-sample" style="font-size:10px;color:var(--muted)">协创者 Synnovator</div>
+      </div>
+    </div>
+
+    <div class="color-group-label">Font Weights / 字重</div>
+    <div class="weight-cards">
+      <div class="weight-card">
+        <div class="weight-label">Light / 细体 300</div>
+        <div class="weight-preview" style="font-weight:300">Synnovator</div>
+        <div class="weight-preview weight-cn" style="font-weight:300">协创者平台</div>
+      </div>
+      <div class="weight-card">
+        <div class="weight-label">Regular / 常规 400</div>
+        <div class="weight-preview" style="font-weight:400">Synnovator</div>
+        <div class="weight-preview weight-cn" style="font-weight:400">协创者平台</div>
+      </div>
+      <div class="weight-card">
+        <div class="weight-label">Medium / 中等 500</div>
+        <div class="weight-preview" style="font-weight:500">Synnovator</div>
+        <div class="weight-preview weight-cn" style="font-weight:500">协创者平台</div>
+      </div>
+      <div class="weight-card">
+        <div class="weight-label">Bold / 粗体 700</div>
+        <div class="weight-preview" style="font-weight:700">Synnovator</div>
+        <div class="weight-preview weight-cn" style="font-weight:700">协创者平台</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="gradient-bar"></div>
+
+  <!-- ================================ -->
+  <!-- SPACING & RADIUS -->
+  <!-- ================================ -->
+  <div class="section">
+    <div class="section-title">03 / Spacing & Border Radius <span class="cn">间距与圆角体系</span></div>
+
+    <div class="color-group-label">Spacing Scale / 间距体系</div>
+    <div class="tokens-row">
+      <div class="token-item">
+        <div class="spacing-block" style="width:4px;height:4px"></div>
+        <div class="token-label">4px</div>
+        <div class="token-var">--spacing-xs</div>
+        <div class="token-desc">紧凑间距<br>Tight</div>
+      </div>
+      <div class="token-item">
+        <div class="spacing-block" style="width:8px;height:8px"></div>
+        <div class="token-label">8px</div>
+        <div class="token-var">--spacing-sm</div>
+        <div class="token-desc">默认内距<br>Default</div>
+      </div>
+      <div class="token-item">
+        <div class="spacing-block" style="width:16px;height:16px"></div>
+        <div class="token-label">16px</div>
+        <div class="token-var">--spacing-md</div>
+        <div class="token-desc">标准间距<br>Standard</div>
+      </div>
+      <div class="token-item">
+        <div class="spacing-block" style="width:24px;height:24px"></div>
+        <div class="token-label">24px</div>
+        <div class="token-var">--spacing-lg</div>
+        <div class="token-desc">区块间距<br>Section</div>
+      </div>
+      <div class="token-item">
+        <div class="spacing-block" style="width:32px;height:32px"></div>
+        <div class="token-label">32px</div>
+        <div class="token-var">--spacing-xl</div>
+        <div class="token-desc">大区块内距<br>Major</div>
+      </div>
+    </div>
+
+    <div class="color-group-label">Border Radius / 圆角体系</div>
+    <div class="radius-row">
+      <div class="token-item">
+        <div class="radius-box" style="border-radius:4px"></div>
+        <div class="token-label">4px</div>
+        <div class="token-var">--radius-sm</div>
+        <div class="token-desc">标签/徽章<br>Tags</div>
+      </div>
+      <div class="token-item">
+        <div class="radius-box" style="border-radius:8px"></div>
+        <div class="token-label">8px</div>
+        <div class="token-var">--radius-md</div>
+        <div class="token-desc">输入框<br>Inputs</div>
+      </div>
+      <div class="token-item">
+        <div class="radius-box" style="border-radius:12px"></div>
+        <div class="token-label">12px</div>
+        <div class="token-var">--radius-lg</div>
+        <div class="token-desc">卡片/面板<br>Cards</div>
+      </div>
+      <div class="token-item">
+        <div class="radius-box" style="border-radius:21px"></div>
+        <div class="token-label">21px</div>
+        <div class="token-var">--radius-xl</div>
+        <div class="token-desc">按钮<br>Buttons</div>
+      </div>
+      <div class="token-item">
+        <div class="radius-box" style="border-radius:50px"></div>
+        <div class="token-label">50px</div>
+        <div class="token-var">--radius-pill</div>
+        <div class="token-desc">头像/药丸<br>Pill</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="gradient-bar"></div>
+
+  <!-- ================================ -->
+  <!-- COMPONENT PREVIEW -->
+  <!-- ================================ -->
+  <div class="section">
+    <div class="section-title">04 / Component Preview <span class="cn">组件预览</span></div>
+
+    <div class="preview-grid">
+      <!-- Buttons -->
+      <div class="preview-card">
+        <div class="preview-label">Buttons / 按钮</div>
+        <div class="btn-row" style="margin-bottom:12px">
+          <button class="btn btn-primary">Primary 主要</button>
+          <button class="btn btn-accent">Accent 强调</button>
+          <button class="btn btn-pink">Feature 功能</button>
+        </div>
+        <div class="btn-row" style="margin-bottom:12px">
+          <button class="btn btn-secondary">Secondary 次要</button>
+          <button class="btn btn-ghost">Ghost 幽灵</button>
+          <button class="btn btn-danger">Danger 危险</button>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary btn-pill">加入队伍</button>
+          <button class="btn btn-accent btn-pill">发布提案</button>
+          <button class="btn btn-blue btn-pill">Join Team</button>
+        </div>
+      </div>
+
+      <!-- Tags -->
+      <div class="preview-card">
+        <div class="preview-label">Tags & Badges / 标签与徽章</div>
+        <div class="tag-row" style="margin-bottom:12px">
+          <span class="tag tag-lime">热门 Hot</span>
+          <span class="tag tag-mint">提案广场</span>
+          <span class="tag tag-pink">悬赏令</span>
+          <span class="tag tag-blue">官方 Official</span>
+          <span class="tag tag-orange">竞赛 Contest</span>
+        </div>
+        <div class="tag-row">
+          <span class="tag tag-dark">找队友</span>
+          <span class="tag tag-dark">找点子</span>
+          <span class="tag tag-dark">技术文档</span>
+          <span class="tag tag-dark">Explore</span>
+        </div>
+      </div>
+
+      <!-- Search Input -->
+      <div class="preview-card">
+        <div class="preview-label">Inputs / 输入框</div>
+        <div class="input-mock">
+          <span class="placeholder">搜索 / Search...</span>
+          <span class="icon">&#128269;</span>
+        </div>
+        <div class="input-mock" style="border:1.5px solid var(--lime)">
+          <span class="placeholder" style="color:var(--white)">协创者平台 Synnovator</span>
+          <span class="icon" style="color:var(--lime)">&#128269;</span>
+        </div>
+      </div>
+
+      <!-- Cards -->
+      <div class="preview-card">
+        <div class="preview-label">Cards / 卡片</div>
+        <div class="card-mock">
+          <h4>发布提案 / Post Proposal</h4>
+          <p>发布一个小提案啦～ / Share your idea with the team</p>
+          <div class="card-footer">
+            <span class="tag tag-lime" style="font-size:10px;padding:2px 8px">提案</span>
+            <span class="tag tag-dark" style="font-size:10px;padding:2px 8px">Proposal</span>
+          </div>
+        </div>
+        <div class="card-mock" style="border-left:3px solid var(--pink)">
+          <h4>创建团队 / Create Team</h4>
+          <p>找志同道合的朋友们 / Find like-minded people</p>
+          <div class="card-footer">
+            <button class="btn btn-primary btn-pill" style="font-size:11px;padding:4px 12px">加入 Join</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="gradient-bar"></div>
+
+  <!-- ================================ -->
+  <!-- BEST USED FOR -->
+  <!-- ================================ -->
+  <div class="section">
+    <div class="section-title">05 / Best Used For <span class="cn">适用场景</span></div>
+    <div class="use-case-grid">
+      <div class="use-case">
+        <div class="icon-large" style="color:var(--lime)">&#9883;</div>
+        <div class="en">Creative Platforms</div>
+        <div class="cn">创意协作平台</div>
+      </div>
+      <div class="use-case">
+        <div class="icon-large" style="color:var(--cyan)">&#9889;</div>
+        <div class="en">Startup Pitches</div>
+        <div class="cn">初创企业路演</div>
+      </div>
+      <div class="use-case">
+        <div class="icon-large" style="color:var(--pink)">&#10024;</div>
+        <div class="en">Hackathon Platforms</div>
+        <div class="cn">黑客松平台</div>
+      </div>
+      <div class="use-case">
+        <div class="icon-large" style="color:var(--orange)">&#127793;</div>
+        <div class="en">Social Creation Apps</div>
+        <div class="cn">社交创作应用</div>
+      </div>
+      <div class="use-case">
+        <div class="icon-large" style="color:var(--mint)">&#128101;</div>
+        <div class="en">Team-building Tools</div>
+        <div class="cn">团队协作工具</div>
+      </div>
+      <div class="use-case">
+        <div class="icon-large" style="color:var(--blue)">&#128161;</div>
+        <div class="en">Innovation Hubs</div>
+        <div class="cn">创新中心</div>
+      </div>
+      <div class="use-case">
+        <div class="icon-large" style="color:var(--purple)">&#127912;</div>
+        <div class="en">Neon-on-Dark UI</div>
+        <div class="cn">霓虹暗色界面</div>
+      </div>
+      <div class="use-case">
+        <div class="icon-large" style="color:var(--yellow)">&#128640;</div>
+        <div class="en">Gen-Z Products</div>
+        <div class="cn">Z 世代产品</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="gradient-bar"></div>
+  <div class="footer">
+    <p><strong>Neon Forge / 霓虹锻造</strong> &mdash; Synnovator 协创者 Design Theme</p>
+    <p style="margin-top:4px;font-size:11px">Generated from specs/ui/style.pen</p>
+  </div>
+
+</div>
+</body>
+</html>

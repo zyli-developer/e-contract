@@ -1,0 +1,110 @@
+"""{{ resource_name }} CRUD 测试"""
+import pytest
+
+from app import crud, schemas
+
+
+class Test{{ model_name }}CRUD:
+    """{{ model_name }} CRUD 单元测试"""
+
+    def test_create_{{ resource_name }}(self, db):
+        """测试创建 {{ resource_name }}"""
+        obj_in = schemas.{{ model_name }}Create(
+            {% for field in create_fields %}{{ field.name }}={{ field.value }},
+            {% endfor %}
+        )
+        item = crud.{{ crud_name }}.create(db, obj_in=obj_in)
+
+        {% for field in create_fields %}assert item.{{ field.name }} == {{ field.value }}
+        {% endfor %}assert item.id is not None
+
+    def test_get_{{ resource_name }}(self, db):
+        """测试获取 {{ resource_name }}"""
+        obj_in = schemas.{{ model_name }}Create(
+            {% for field in create_fields %}{{ field.name }}={{ field.value }},
+            {% endfor %}
+        )
+        created_item = crud.{{ crud_name }}.create(db, obj_in=obj_in)
+
+        fetched_item = crud.{{ crud_name }}.get(db, id=created_item.id)
+
+        assert fetched_item is not None
+        assert fetched_item.id == created_item.id
+
+    def test_get_{{ resource_name }}_not_found(self, db):
+        """测试获取不存在的 {{ resource_name }}"""
+        item = crud.{{ crud_name }}.get(db, id=99999)
+        assert item is None
+
+    {% if has_unique_field %}def test_get_{{ resource_name }}_by_{{ unique_field }}(self, db):
+        """测试通过 {{ unique_field }} 获取 {{ resource_name }}"""
+        obj_in = schemas.{{ model_name }}Create(
+            {% for field in create_fields %}{{ field.name }}={{ field.value }},
+            {% endfor %}
+        )
+        created_item = crud.{{ crud_name }}.create(db, obj_in=obj_in)
+
+        fetched_item = crud.{{ crud_name }}.get_by_{{ unique_field }}(db, {{ unique_field }}={{ unique_field_value }})
+
+        assert fetched_item is not None
+        assert fetched_item.id == created_item.id
+    {% endif %}
+
+    def test_get_multi_{{ resource_name }}(self, db):
+        """测试获取多个 {{ resource_name }}"""
+        # 创建 5 个 {{ resource_name }}
+        for i in range(5):
+            crud.{{ crud_name }}.create(
+                db,
+                obj_in=schemas.{{ model_name }}Create(
+                    {% for field in create_fields %}{{ field.name }}={% if field.is_string %}f{{ field.value_template }}{% else %}{{ field.value }}{% endif %},
+                    {% endfor %}
+                )
+            )
+
+        items = crud.{{ crud_name }}.get_multi(db, skip=0, limit=10)
+
+        assert len(items) >= 5
+
+    def test_get_multi_with_pagination(self, db):
+        """测试分页"""
+        # 创建 10 个 {{ resource_name }}
+        for i in range(10):
+            crud.{{ crud_name }}.create(
+                db,
+                obj_in=schemas.{{ model_name }}Create(
+                    {% for field in create_fields %}{{ field.name }}={% if field.is_string %}f{{ field.value_template }}{% else %}{{ field.value }}{% endif %},
+                    {% endfor %}
+                )
+            )
+
+        items = crud.{{ crud_name }}.get_multi(db, skip=5, limit=3)
+
+        assert len(items) == 3
+
+    def test_update_{{ resource_name }}(self, db):
+        """测试更新 {{ resource_name }}"""
+        obj_in = schemas.{{ model_name }}Create(
+            {% for field in create_fields %}{{ field.name }}={{ field.value }},
+            {% endfor %}
+        )
+        item = crud.{{ crud_name }}.create(db, obj_in=obj_in)
+
+        update_data = schemas.{{ model_name }}Update({% if update_field %}{{ update_field.name }}={{ update_field.new_value }}{% endif %})
+        updated_item = crud.{{ crud_name }}.update(db, db_obj=item, obj_in=update_data)
+
+        {% if update_field %}assert updated_item.{{ update_field.name }} == {{ update_field.new_value }}
+        {% endif %}
+
+    def test_delete_{{ resource_name }}(self, db):
+        """测试删除 {{ resource_name }}"""
+        obj_in = schemas.{{ model_name }}Create(
+            {% for field in create_fields %}{{ field.name }}={{ field.value }},
+            {% endfor %}
+        )
+        item = crud.{{ crud_name }}.create(db, obj_in=obj_in)
+
+        crud.{{ crud_name }}.remove(db, id=item.id)
+
+        deleted_item = crud.{{ crud_name }}.get(db, id=item.id)
+        assert deleted_item is None
