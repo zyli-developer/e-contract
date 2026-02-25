@@ -1,6 +1,6 @@
 import Taro from '@tarojs/taro'
 import { useAuthStore } from '@/store/useAuthStore'
-import { BASE_URL, DEFAULT_TIMEOUT, TENANT_ID } from './config'
+import { BASE_URL, DEFAULT_TIMEOUT } from './config'
 
 interface RequestOptions {
   url: string
@@ -24,7 +24,6 @@ export async function request<T = any>(options: RequestOptions): Promise<T> {
 
   const header: Record<string, string> = {
     'Content-Type': 'application/json',
-    'tenant-id': TENANT_ID,
   }
 
   if (options.isAuth !== false && token) {
@@ -83,7 +82,6 @@ async function refreshTokenRequest() {
     method: 'POST',
     header: {
       'Content-Type': 'application/json',
-      'tenant-id': TENANT_ID,
     },
     data: { refreshToken },
   })

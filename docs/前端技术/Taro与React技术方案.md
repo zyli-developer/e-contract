@@ -75,7 +75,6 @@ mini-contract-app/
 │   │   ├── contract-create/         # 合同创建
 │   │   ├── profile/                 # 个人中心
 │   │   ├── enterprise/              # 企业管理
-│   │   ├── ai-draft/                # AI 起草
 │   │   ├── template-market/         # 模板市场
 │   │   ├── contract-audit/          # 天眼审查
 │   │   ├── contract-verify/         # 合同验真
@@ -99,7 +98,6 @@ mini-contract-app/
 │   │   ├── seals.ts                 # 印章管理
 │   │   ├── enterprise.ts            # 企业管理
 │   │   ├── templates.ts             # 合同模板
-│   │   ├── aiDraft.ts               # AI 起草
 │   │   ├── quota.ts                 # 配额
 │   │   ├── verification.ts          # 合同验真
 │   │   └── file.ts                  # 文件上传
@@ -112,7 +110,6 @@ mini-contract-app/
 │   ├── hooks/                       # 自定义 Hooks
 │   │   ├── useAuth.ts               # 认证相关
 │   │   ├── useKycGuard.ts           # KYC 校验守卫
-│   │   ├── useSealToken.ts          # Seal Token 管理
 │   │   └── usePagination.ts         # 分页加载
 │   │
 │   ├── utils/                       # 工具函数
@@ -123,8 +120,7 @@ mini-contract-app/
 │   │   └── share.ts                 # 分享配置
 │   │
 │   └── config/                      # 应用配置
-│       ├── app.config.ts            # 品牌名、版本号
-│       └── seal.config.ts           # Seal Token TTL 配置
+│       └── app.config.ts            # 品牌名、版本号
 │
 ├── config/                          # Taro 编译配置
 │   ├── index.ts                     # 通用配置
@@ -227,9 +223,6 @@ export default defineAppConfig({
     'pages/enterprise/list',
     'pages/enterprise/detail',
     'pages/enterprise/members',
-    'pages/ai-draft/index',
-    'pages/ai-draft/chat',
-    'pages/ai-draft/editor',
     'pages/template-market/index',
     'pages/template-detail/index',
     'pages/contract-audit/report',
@@ -290,7 +283,6 @@ export async function request<T>(options: RequestOptions): Promise<T> {
   const { token } = useAuthStore.getState()
   const header: Record<string, string> = {
     'Content-Type': 'application/json',
-    'tenant-id': '1',
   }
   if (options.isAuth !== false && token) {
     header['Authorization'] = `Bearer ${token}`

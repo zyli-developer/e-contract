@@ -14,5 +14,4 @@ class SealTemplate(Base):
     type: Mapped[int] = mapped_column(SmallInteger, comment="适用印章类型")
     image_url: Mapped[str | None] = mapped_column(String(500), nullable=True, comment="模板预览图")
     form_fields: Mapped[dict | None] = mapped_column(JSON, nullable=True, comment="模板表单字段定义")
-    tenant_id: Mapped[int] = mapped_column(BigInteger, default=1, comment="租户 ID")
     create_time: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())

@@ -19,5 +19,4 @@ class MemberSocialUser(Base):
     unionid: Mapped[str | None] = mapped_column(String(100), nullable=True, comment="微信 unionid")
     nickname: Mapped[str | None] = mapped_column(String(50), nullable=True, comment="社交平台昵称")
     avatar: Mapped[str | None] = mapped_column(String(500), nullable=True, comment="社交平台头像")
-    tenant_id: Mapped[int] = mapped_column(BigInteger, default=1, comment="租户 ID")
     create_time: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())

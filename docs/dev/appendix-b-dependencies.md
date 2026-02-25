@@ -8,7 +8,6 @@ fastapi>=0.115.0
 uvicorn[standard]
 sqlalchemy[asyncio]>=2.0
 aiomysql
-alembic
 redis[hiredis]
 pydantic>=2.0.0
 

@@ -19,5 +19,4 @@ class SignTaskParticipant(Base):
     seal_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True, comment="使用的印章 ID")
     sign_time: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, comment="签署时间")
     sign_position: Mapped[dict | None] = mapped_column(JSON, nullable=True, comment="签署位置坐标")
-    tenant_id: Mapped[int] = mapped_column(BigInteger, default=1, comment="租户 ID")
     create_time: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())

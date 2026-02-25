@@ -10,14 +10,17 @@ from app.core.exceptions import (
     business_exception_handler,
     generic_exception_handler,
 )
-from app.core.middleware import RequestLoggingMiddleware, TenantMiddleware
+from app.core.middleware import RequestLoggingMiddleware
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # 启动时执行
+    # 启动时：自动建表
+    from app.database import engine, init_db
+    await init_db()
     yield
-    # 关闭时执行
+    # 关闭时：释放连接池
+    await engine.dispose()
 
 
 app = FastAPI(
@@ -34,7 +37,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.add_middleware(TenantMiddleware)
 app.add_middleware(RequestLoggingMiddleware)
 
 # --- 异常处理 ---

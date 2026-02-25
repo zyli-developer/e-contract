@@ -15,6 +15,5 @@ class Member(Base):
     nickname: Mapped[str | None] = mapped_column(String(50), nullable=True, comment="昵称")
     avatar: Mapped[str | None] = mapped_column(String(500), nullable=True, comment="头像 URL")
     status: Mapped[int] = mapped_column(SmallInteger, default=1, comment="状态: 0=禁用, 1=正常")
-    tenant_id: Mapped[int] = mapped_column(BigInteger, default=1, index=True, comment="租户 ID")
     create_time: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     update_time: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())

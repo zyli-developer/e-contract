@@ -10,11 +10,10 @@
 |---|------|------|
 | 0.1 | 初始化 FastAPI 项目 | 创建 `mini-contract-api/`，安装核心依赖（fastapi, uvicorn, sqlalchemy[asyncio], aiomysql, redis, pydantic>=2.0） |
 | 0.2 | 配置数据库连接 | SQLAlchemy 2.0 async engine + session factory，环境变量管理（python-dotenv） |
-| 0.3 | Alembic 迁移框架 | 初始化 Alembic，配置 async migration runner |
+| 0.3 | 自动建表 | 使用 `Base.metadata.create_all()` 在应用启动时自动创建表 |
 | 0.4 | 统一响应格式 | `ApiResponse(code, msg, data)` + `PageResult(list, total, pageNo, pageSize)` |
 | 0.5 | 全局异常处理 | BusinessException、ValidationException、统一错误码体系 |
-| 0.6 | 多租户中间件 | 从请求头 `tenant-id` 提取租户 ID，自动注入查询过滤 |
-| 0.7 | 创建 MVP 数据库表 | 10 张表（见下方清单），SQLAlchemy models + Alembic 初始迁移 |
+| 0.7 | 创建 MVP 数据库表 | 10 张表（见下方清单），SQLAlchemy models + create_all 自动建表 |
 | 0.8 | pytest 测试框架 | conftest.py（async test DB、TestClient fixture）、pytest-asyncio 配置 |
 | 0.9 | 文件上传基础 | `POST /infra/file/upload` 接口，支持 S3/MinIO/本地存储，限制：图片 5MB、文档 20MB |
 
@@ -40,7 +39,7 @@
 | 0.10 | 初始化 Taro 项目 | `taro init`，配置 React 18 + TypeScript + pnpm |
 | 0.11 | 页面路由框架 | `app.config.ts` 配置 3 个 tabBar（首页/合同管理/我的）+ 基础路由 |
 | 0.12 | UI 组件库集成 | NutUI-React 或 Taro UI，配置主题色 `#00C28A` |
-| 0.13 | 请求层封装 | 基于 Taro.request 封装 `request()`，统一 header（Authorization、tenant-id、Seal-Token） |
+| 0.13 | 请求层封装 | 基于 Taro.request 封装 `request()`，统一 header（Authorization） |
 | 0.14 | 环境配置 | dev/test/prod 环境切换，API baseURL 和 Seal Core H5 URL |
 | 0.15 | Jest 测试配置 | jest.config.ts、setupTests.ts、MSW mock server |
 
@@ -51,14 +50,13 @@
 | `test_health.py` | 应用启动、health check 端点返回 200 |
 | `test_response_format.py` | ApiResponse/PageResult 序列化格式正确 |
 | `test_exception_handler.py` | 各异常类型返回正确错误码和 HTTP 状态 |
-| `test_tenant_middleware.py` | 租户 header 缺失返回 400、正确租户 ID 注入 |
 | `test_file_upload.py` | 文件上传成功、超限拒绝、类型校验 |
 | `request.test.ts` | 请求拦截器添加正确 header、401 触发 token 刷新 |
 
 ## 交付物
 
 - [ ] 后端项目可 `uvicorn app.main:app` 启动，`/health` 返回 200
-- [ ] 10 张数据库表通过 Alembic 迁移创建成功
+- [ ] 10 张数据库表通过 create_all 自动创建成功
 - [ ] 前端项目可 `pnpm run dev:weixin` 启动，微信开发者工具中 tabBar 显示 3 个 tab
 - [ ] CI 流水线：push 触发 pytest + jest
 - [ ] 后端基础设施层测试 100% 通过

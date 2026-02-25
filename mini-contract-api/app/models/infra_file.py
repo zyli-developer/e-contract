@@ -16,5 +16,5 @@ class InfraFile(Base):
     url: Mapped[str] = mapped_column(String(500), comment="访问 URL")
     type: Mapped[str | None] = mapped_column(String(50), nullable=True, comment="MIME 类型")
     size: Mapped[int | None] = mapped_column(BigInteger, nullable=True, comment="文件大小（字节）")
-    tenant_id: Mapped[int] = mapped_column(BigInteger, default=1, comment="租户 ID")
+
     create_time: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())

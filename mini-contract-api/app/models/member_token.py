@@ -16,5 +16,4 @@ class MemberToken(Base):
     access_token_expire_time: Mapped[datetime] = mapped_column(DateTime, comment="Access Token 过期时间")
     refresh_token_expire_time: Mapped[datetime] = mapped_column(DateTime, comment="Refresh Token 过期时间")
     refresh_token_used: Mapped[int] = mapped_column(SmallInteger, default=0, comment="是否已使用（一次性）")
-    tenant_id: Mapped[int] = mapped_column(BigInteger, default=1, comment="租户 ID")
     create_time: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())

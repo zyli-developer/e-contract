@@ -17,5 +17,4 @@ class SignEvidenceLog(Base):
     device: Mapped[str | None] = mapped_column(String(255), nullable=True, comment="设备信息")
     data_hash: Mapped[str | None] = mapped_column(String(64), nullable=True, comment="操作时的文档 SHA-256 哈希")
     detail: Mapped[dict | None] = mapped_column(JSON, nullable=True, comment="操作详情")
-    tenant_id: Mapped[int] = mapped_column(BigInteger, default=1, comment="租户 ID")
     create_time: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())

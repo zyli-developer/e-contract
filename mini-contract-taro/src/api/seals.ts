@@ -19,8 +19,3 @@ export function deleteSeal(id: string | number) {
 export function setDefaultSeal(id: string | number) {
   return request({ url: `/api/v1/seal/seal-info/set-default?id=${id}`, method: 'PUT' })
 }
-
-/** Seal Token 兑换 */
-export function exchangeSealToken(data?: Record<string, any>) {
-  return request({ url: '/api/v1/seal/auth/exchange-token', method: 'POST', data })
-}

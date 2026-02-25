@@ -28,7 +28,6 @@
 | `data_hash` | varchar(64) | 操作时的文档 SHA-256 哈希 |
 | `detail` | json | 操作详情（签署方列表、拒签原因等） |
 | `create_time` | datetime | 操作时间（精确到毫秒） |
-| `tenant_id` | bigint | 租户 ID |
 
 ## 后续版本需新增的表
 

@@ -21,7 +21,6 @@ class SignTask(Base):
     enterprise_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True, index=True, comment="发起方企业 ID")
     deadline: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, comment="签署截止时间")
     remark: Mapped[str | None] = mapped_column(String(500), nullable=True, comment="备注")
-    tenant_id: Mapped[int] = mapped_column(BigInteger, default=1, comment="租户 ID")
     create_time: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     update_time: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
     complete_time: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, comment="完成时间")

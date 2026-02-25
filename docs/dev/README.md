@@ -12,7 +12,7 @@
 |------|------|---------|---------|
 | [Phase 0](./phase-0-infrastructure.md) | 基础设施搭建 | 项目骨架、数据库、CI/CD、测试框架 | 无 |
 | [Phase 1](./phase-1-authentication.md) | 用户认证 | 微信登录、短信登录、双 Token、基础 Profile | Phase 0 |
-| [Phase 2](./phase-2-seal-signature.md) | 个人签名与 Seal Token | 手绘签名、签名管理、Seal Token 认证 | Phase 1 |
+| [Phase 2](./phase-2-seal-signature.md) | 个人签名管理 | 手绘签名、签名管理 | Phase 1 |
 | [Phase 3](./phase-3-template-contract.md) | 合同模板与创建 | 模板浏览、合同创建（模板/上传）、指定签署方 | Phase 1 |
 | [Phase 4](./phase-4-signing-management.md) | 合同签署与管理 | H5 签署集成、合同列表、状态机、通知签署方 | Phase 2+3 |
 | [Phase 5](./phase-5-testing-launch.md) | 集成测试与上线 | E2E 测试、性能优化、微信提审发布 | 全部 |
@@ -26,7 +26,7 @@
 | 后端 Mock | respx (HTTP mock) | 微信 API、短信 API |
 | 前端单元测试 | Jest + React Testing Library | 组件渲染、交互、状态管理，覆盖率 ≥ 75% |
 | 前端 API Mock | MSW (Mock Service Worker) | API 请求模拟，拦截 Taro.request |
-| 前端 Hook 测试 | @testing-library/react-hooks | useAuth、useSealToken、usePagination 等 |
+| 前端 Hook 测试 | @testing-library/react-hooks | useAuth、usePagination 等 |
 | CI 流水线 | GitHub Actions | 每次 push 执行 `pytest --cov` + `jest --coverage` |
 
 ### 测试目录约定
