@@ -56,4 +56,105 @@
 
 .sign-action {
   padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.reject-btn {
+  color: #ff4d4f;
+}
+
+/* 验证码确认 */
+.verify-section {
+  background: #fff;
+  margin: 32px;
+  padding: 48px 32px;
+  border-radius: 16px;
+  text-align: center;
+}
+
+.verify-title {
+  display: block;
+  font-size: 36px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 16px;
+}
+
+.verify-hint {
+  display: block;
+  font-size: 26px;
+  color: #999;
+  margin-bottom: 40px;
+}
+
+.code-input-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 32px;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.code-input {
+  flex: 1;
+  height: 88px;
+  padding: 0 24px;
+  font-size: 32px;
+}
+
+.resend-btn {
+  padding: 0 24px;
+  font-size: 26px;
+  color: #00C28A;
+  white-space: nowrap;
+
+  &.disabled {
+    color: #999;
+  }
+}
+
+.back-link {
+  display: block;
+  margin-top: 24px;
+  font-size: 26px;
+  color: #00C28A;
+}
+
+/* 签署结果 */
+.result-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-top: 200px;
+}
+
+.result-icon {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: #00C28A;
+  color: #fff;
+  font-size: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 32px;
+}
+
+.result-title {
+  display: block;
+  font-size: 36px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 16px;
+}
+
+.result-hint {
+  display: block;
+  font-size: 28px;
+  color: #999;
 }

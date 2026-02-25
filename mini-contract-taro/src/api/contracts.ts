@@ -34,3 +34,43 @@ export function deleteContract(id: string | number) {
 export function urgeSign(id: string | number) {
   return request({ url: `/seal/sign-task/${id}/urge`, method: 'POST' })
 }
+
+/** 发起签署（草稿 → 签署中）*/
+export function initiateSign(id: string | number) {
+  return request({ url: `/seal/sign-task/${id}/initiate`, method: 'POST' })
+}
+
+/** 发送签署验证码 */
+export function sendSignCode(id: string | number) {
+  return request({ url: `/seal/sign-task/${id}/send-sign-code`, method: 'POST' })
+}
+
+/** 验证签署验证码 */
+export function verifySignCode(id: string | number, code: string) {
+  return request({ url: `/seal/sign-task/${id}/verify-sign-code`, method: 'POST', data: { code } })
+}
+
+/** 执行签署 */
+export function executeSign(id: string | number, sealId?: number) {
+  return request({ url: `/seal/sign-task/${id}/sign`, method: 'POST', data: { seal_id: sealId } })
+}
+
+/** 拒签 */
+export function rejectSign(id: string | number, reason?: string) {
+  return request({ url: `/seal/sign-task/${id}/reject`, method: 'POST', data: { reason } })
+}
+
+/** 获取证据链 */
+export function getEvidence(id: string | number) {
+  return request({ url: `/seal/sign-task/${id}/evidence` })
+}
+
+/** 校验文档哈希 */
+export function verifyHash(id: string | number) {
+  return request({ url: `/seal/sign-task/${id}/verify-hash` })
+}
+
+/** 验证权限 */
+export function validatePermission(id: string | number) {
+  return request({ url: `/seal/sign-task/validate-permission?id=${id}` })
+}

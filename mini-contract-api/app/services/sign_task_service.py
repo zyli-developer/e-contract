@@ -1,10 +1,13 @@
 """合同签署任务服务"""
-from typing import List
+import hashlib
+import logging
+from datetime import datetime
+from typing import List, Optional
 
-from sqlalchemy import func, select, update
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import BusinessException, ValidationException
+from app.core.exceptions import BusinessException, ForbiddenException, ValidationException
 from app.core.response import PageResult
 from app.models.sign_task import SignTask
 from app.models.sign_task_participant import SignTaskParticipant
@@ -14,7 +17,19 @@ from app.schemas.contract import (
     SignTaskResponse,
     SignTaskStatistics,
 )
+from app.services.evidence_service import EvidenceAction, log_evidence
 from app.utils.pagination import paginate
+from app.utils.redis_client import (
+    check_sms_rate_limit,
+    delete_sms_code,
+    get_sms_code,
+    set_sms_code,
+)
+
+logger = logging.getLogger(__name__)
+
+# 签署验证码 SMS scene
+SIGN_CODE_SCENE = 10
 
 
 def _participant_response(p: SignTaskParticipant) -> dict:
@@ -27,6 +42,47 @@ def _participant_response(p: SignTaskParticipant) -> dict:
     ).model_dump()
 
 
+def _task_response(task: SignTask, participants: list) -> dict:
+    return SignTaskResponse(
+        id=task.id,
+        name=task.name,
+        status=task.status,
+        file_url=task.file_url,
+        signed_file_url=task.signed_file_url,
+        file_hash=task.file_hash,
+        signed_file_hash=task.signed_file_hash,
+        template_id=task.template_id,
+        creator_id=task.creator_id,
+        remark=task.remark,
+        create_time=task.create_time.isoformat() if task.create_time else None,
+        complete_time=task.complete_time.isoformat() if task.complete_time else None,
+        participants=participants,
+    ).model_dump()
+
+
+async def _get_task(db: AsyncSession, task_id: int) -> SignTask:
+    """获取合同（内部用）"""
+    result = await db.execute(select(SignTask).where(SignTask.id == task_id))
+    task = result.scalar_one_or_none()
+    if not task:
+        raise BusinessException(code=404, msg="合同不存在")
+    return task
+
+
+async def _get_participants(db: AsyncSession, task_id: int) -> list:
+    """获取签署方列表"""
+    p_result = await db.execute(
+        select(SignTaskParticipant)
+        .where(SignTaskParticipant.task_id == task_id)
+        .order_by(SignTaskParticipant.order_num)
+    )
+    return [_participant_response(p) for p in p_result.scalars().all()]
+
+
+# ==============================
+# 基础 CRUD
+# ==============================
+
 async def create_sign_task(
     db: AsyncSession,
     creator_id: int,
@@ -35,6 +91,8 @@ async def create_sign_task(
     file_url: str | None = None,
     remark: str | None = None,
     participants: List[ParticipantRequest] | None = None,
+    ip: str | None = None,
+    device: str | None = None,
 ) -> dict:
     """创建合同签署任务"""
     if not name:
@@ -42,12 +100,17 @@ async def create_sign_task(
     if not template_id and not file_url:
         raise ValidationException("请选择模板或上传合同文件")
 
-    # 创建签署任务
+    # 计算文件哈希（如果有文件 URL，MVP 阶段用 URL 字符串做哈希）
+    file_hash = None
+    if file_url:
+        file_hash = hashlib.sha256(file_url.encode()).hexdigest()
+
     task = SignTask(
         name=name,
         status=1,  # 草稿
         template_id=template_id,
         file_url=file_url,
+        file_hash=file_hash,
         creator_id=creator_id,
         remark=remark,
     )
@@ -75,17 +138,19 @@ async def create_sign_task(
             await db.refresh(participant)
             participant_list.append(_participant_response(participant))
 
-    return SignTaskResponse(
-        id=task.id,
-        name=task.name,
-        status=task.status,
-        file_url=task.file_url,
-        template_id=task.template_id,
-        creator_id=task.creator_id,
-        remark=task.remark,
-        create_time=task.create_time.isoformat() if task.create_time else None,
-        participants=participant_list,
-    ).model_dump()
+    # 记录证据：合同创建
+    await log_evidence(
+        db,
+        task_id=task.id,
+        action=EvidenceAction.CONTRACT_CREATED,
+        user_id=creator_id,
+        ip=ip,
+        device=device,
+        data_hash=file_hash,
+        detail={"name": name, "participants_count": len(participant_list)},
+    )
+
+    return _task_response(task, participant_list)
 
 
 async def get_statistics(db: AsyncSession, creator_id: int) -> dict:
@@ -114,35 +179,15 @@ async def list_tasks(
 ) -> PageResult:
     """合同列表（分页）"""
     query = select(SignTask).where(SignTask.creator_id == creator_id)
-
     if status is not None:
         query = query.where(SignTask.status == status)
-
     query = query.order_by(SignTask.create_time.desc())
     result = await paginate(db, query, page_no, page_size)
 
     task_list = []
     for task in result.list:
-        # 查询签署方
-        p_result = await db.execute(
-            select(SignTaskParticipant)
-            .where(SignTaskParticipant.task_id == task.id)
-            .order_by(SignTaskParticipant.order_num)
-        )
-        participants = [_participant_response(p) for p in p_result.scalars().all()]
-
-        task_list.append(SignTaskResponse(
-            id=task.id,
-            name=task.name,
-            status=task.status,
-            file_url=task.file_url,
-            signed_file_url=task.signed_file_url,
-            template_id=task.template_id,
-            creator_id=task.creator_id,
-            remark=task.remark,
-            create_time=task.create_time.isoformat() if task.create_time else None,
-            participants=participants,
-        ).model_dump())
+        participants = await _get_participants(db, task.id)
+        task_list.append(_task_response(task, participants))
 
     result.list = task_list
     return result
@@ -150,35 +195,15 @@ async def list_tasks(
 
 async def get_task_detail(db: AsyncSession, task_id: int, user_id: int) -> dict:
     """获取合同详情"""
-    result = await db.execute(select(SignTask).where(SignTask.id == task_id))
-    task = result.scalar_one_or_none()
-
-    if not task:
-        raise BusinessException(code=404, msg="合同不存在")
-
-    # 查询签署方
-    p_result = await db.execute(
-        select(SignTaskParticipant)
-        .where(SignTaskParticipant.task_id == task.id)
-        .order_by(SignTaskParticipant.order_num)
-    )
-    participants = [_participant_response(p) for p in p_result.scalars().all()]
-
-    return SignTaskResponse(
-        id=task.id,
-        name=task.name,
-        status=task.status,
-        file_url=task.file_url,
-        signed_file_url=task.signed_file_url,
-        template_id=task.template_id,
-        creator_id=task.creator_id,
-        remark=task.remark,
-        create_time=task.create_time.isoformat() if task.create_time else None,
-        participants=participants,
-    ).model_dump()
+    task = await _get_task(db, task_id)
+    participants = await _get_participants(db, task.id)
+    return _task_response(task, participants)
 
 
-async def cancel_task(db: AsyncSession, task_id: int, user_id: int) -> None:
+async def cancel_task(
+    db: AsyncSession, task_id: int, user_id: int,
+    ip: str | None = None, device: str | None = None,
+) -> None:
     """取消合同"""
     result = await db.execute(
         select(SignTask).where(SignTask.id == task_id, SignTask.creator_id == user_id)
@@ -186,11 +211,22 @@ async def cancel_task(db: AsyncSession, task_id: int, user_id: int) -> None:
     task = result.scalar_one_or_none()
     if not task:
         raise BusinessException(code=404, msg="合同不存在")
-    if task.status not in (1, 2):  # 只能取消草稿和签署中的
+    if task.status not in (1, 2):
         raise BusinessException(code=400, msg="当前状态不允许取消")
 
     task.status = 4  # 已取消
     await db.flush()
+
+    # 记录证据
+    await log_evidence(
+        db,
+        task_id=task_id,
+        action=EvidenceAction.CONTRACT_CANCELLED,
+        user_id=user_id,
+        ip=ip,
+        device=device,
+        detail={"previous_status": 2 if task.status == 4 else 1},
+    )
 
 
 async def delete_task(db: AsyncSession, task_id: int, user_id: int) -> None:
@@ -201,7 +237,7 @@ async def delete_task(db: AsyncSession, task_id: int, user_id: int) -> None:
     task = result.scalar_one_or_none()
     if not task:
         raise BusinessException(code=404, msg="合同不存在")
-    if task.status not in (1, 4):  # 只能删除草稿和已取消
+    if task.status not in (1, 4):
         raise BusinessException(code=400, msg="当前状态不允许删除")
 
     await db.delete(task)
@@ -212,3 +248,359 @@ async def delete_task(db: AsyncSession, task_id: int, user_id: int) -> None:
     for p in p_result.scalars().all():
         await db.delete(p)
     await db.flush()
+
+
+# ==============================
+# Phase 4: 签署流程
+# ==============================
+
+async def initiate_signing(
+    db: AsyncSession, task_id: int, user_id: int,
+    ip: str | None = None, device: str | None = None,
+) -> dict:
+    """发起签署：草稿(1) → 签署中(2)"""
+    result = await db.execute(
+        select(SignTask).where(SignTask.id == task_id, SignTask.creator_id == user_id)
+    )
+    task = result.scalar_one_or_none()
+    if not task:
+        raise BusinessException(code=404, msg="合同不存在")
+    if task.status != 1:
+        raise BusinessException(code=400, msg="只有草稿状态的合同才能发起签署")
+
+    # 检查是否有签署方
+    p_count = (await db.execute(
+        select(func.count()).select_from(SignTaskParticipant)
+        .where(SignTaskParticipant.task_id == task_id)
+    )).scalar() or 0
+    if p_count == 0:
+        raise ValidationException("请至少添加一个签署方")
+
+    task.status = 2  # 签署中
+    await db.flush()
+
+    participants = await _get_participants(db, task.id)
+
+    # 记录证据：发起签署
+    await log_evidence(
+        db,
+        task_id=task_id,
+        action=EvidenceAction.CONTRACT_SENT,
+        user_id=user_id,
+        ip=ip,
+        device=device,
+        data_hash=task.file_hash,
+        detail={"participants": [p["mobile"] for p in participants]},
+    )
+
+    # TODO: 发送通知给签署方（微信模板消息/短信）
+    logger.info(f"[Notify] 合同 {task_id} 已发起签署，通知签署方")
+
+    return _task_response(task, participants)
+
+
+async def send_sign_code(
+    db: AsyncSession, task_id: int, user_id: int,
+    ip: str | None = None, device: str | None = None,
+) -> None:
+    """发送签署验证码到签署方手机"""
+    task = await _get_task(db, task_id)
+    if task.status != 2:
+        raise BusinessException(code=400, msg="合同不在签署中状态")
+
+    # 找到当前用户对应的签署方
+    participant = await _find_participant_by_user(db, task_id, user_id)
+    if not participant:
+        raise ForbiddenException("您不是此合同的签署方")
+    if participant.status == 2:
+        raise BusinessException(code=400, msg="您已签署此合同")
+
+    # 频率限制
+    can_send = await check_sms_rate_limit(participant.mobile, SIGN_CODE_SCENE)
+    if not can_send:
+        raise BusinessException(code=1012002003, msg="发送太频繁，请 60 秒后重试")
+
+    # 生成并存储验证码
+    import random
+    code = "".join(str(random.randint(0, 9)) for _ in range(6))
+    await set_sms_code(participant.mobile, SIGN_CODE_SCENE, code)
+
+    # MVP：日志输出
+    from app.config import settings
+    if settings.DEBUG or not settings.SMS_ACCESS_KEY:
+        logger.info(f"[SMS Mock] 签署验证码 mobile={participant.mobile}, code={code}")
+    else:
+        logger.info(f"[SMS] 发送签署验证码到 {participant.mobile}")
+
+    # 记录证据
+    await log_evidence(
+        db,
+        task_id=task_id,
+        action=EvidenceAction.SIGN_CODE_SENT,
+        user_id=user_id,
+        ip=ip,
+        device=device,
+        detail={"mobile": participant.mobile[:3] + "****" + participant.mobile[-4:]},
+    )
+
+
+async def verify_sign_code(
+    db: AsyncSession, task_id: int, user_id: int, code: str,
+    ip: str | None = None, device: str | None = None,
+) -> bool:
+    """验证签署验证码"""
+    task = await _get_task(db, task_id)
+    if task.status != 2:
+        raise BusinessException(code=400, msg="合同不在签署中状态")
+
+    participant = await _find_participant_by_user(db, task_id, user_id)
+    if not participant:
+        raise ForbiddenException("您不是此合同的签署方")
+
+    # 校验验证码
+    stored_code = await get_sms_code(participant.mobile, SIGN_CODE_SCENE)
+    if not stored_code:
+        raise BusinessException(code=1012002002, msg="验证码已过期，请重新发送")
+    if stored_code != code:
+        raise BusinessException(code=1012002001, msg="验证码错误")
+
+    # 验证通过，删除验证码
+    await delete_sms_code(participant.mobile, SIGN_CODE_SCENE)
+
+    # 记录证据
+    await log_evidence(
+        db,
+        task_id=task_id,
+        action=EvidenceAction.SIGN_CODE_VERIFIED,
+        user_id=user_id,
+        ip=ip,
+        device=device,
+        detail={"mobile": participant.mobile[:3] + "****" + participant.mobile[-4:]},
+    )
+
+    return True
+
+
+async def execute_sign(
+    db: AsyncSession, task_id: int, user_id: int,
+    seal_id: Optional[int] = None,
+    ip: str | None = None, device: str | None = None,
+) -> dict:
+    """执行签署操作"""
+    task = await _get_task(db, task_id)
+    if task.status != 2:
+        raise BusinessException(code=400, msg="合同不在签署中状态")
+
+    # 获取签署方
+    result = await db.execute(
+        select(SignTaskParticipant).where(
+            SignTaskParticipant.task_id == task_id,
+            SignTaskParticipant.member_id == user_id,
+        )
+    )
+    participant = result.scalar_one_or_none()
+    if not participant:
+        # 也尝试用手机号匹配
+        from app.models.member import Member
+        member_result = await db.execute(select(Member).where(Member.id == user_id))
+        member = member_result.scalar_one_or_none()
+        if member:
+            p_result = await db.execute(
+                select(SignTaskParticipant).where(
+                    SignTaskParticipant.task_id == task_id,
+                    SignTaskParticipant.mobile == member.mobile,
+                )
+            )
+            participant = p_result.scalar_one_or_none()
+
+    if not participant:
+        raise ForbiddenException("您不是此合同的签署方")
+    if participant.status == 2:
+        raise BusinessException(code=400, msg="您已签署此合同")
+    if participant.status == 3:
+        raise BusinessException(code=400, msg="您已拒签此合同")
+
+    # 更新签署方状态
+    participant.status = 2  # 已签署
+    participant.sign_time = datetime.now()
+    participant.member_id = user_id
+    if seal_id:
+        participant.seal_id = seal_id
+    await db.flush()
+
+    # 记录证据：签署完成
+    await log_evidence(
+        db,
+        task_id=task_id,
+        action=EvidenceAction.CONTRACT_SIGNED,
+        user_id=user_id,
+        ip=ip,
+        device=device,
+        data_hash=task.file_hash,
+        detail={"seal_id": seal_id, "participant_id": participant.id},
+    )
+
+    # 检查是否所有签署方都已签署
+    await _check_all_signed(db, task, ip=ip, device=device)
+
+    participants = await _get_participants(db, task.id)
+    return _task_response(task, participants)
+
+
+async def reject_sign(
+    db: AsyncSession, task_id: int, user_id: int,
+    reason: str | None = None,
+    ip: str | None = None, device: str | None = None,
+) -> dict:
+    """拒签"""
+    task = await _get_task(db, task_id)
+    if task.status != 2:
+        raise BusinessException(code=400, msg="合同不在签署中状态")
+
+    participant = await _find_participant_by_user(db, task_id, user_id)
+    if not participant:
+        raise ForbiddenException("您不是此合同的签署方")
+    if participant.status != 0:
+        raise BusinessException(code=400, msg="当前状态不允许操作")
+
+    # 更新签署方状态
+    participant.status = 3  # 已拒签
+    await db.flush()
+
+    # 合同状态改为已拒签
+    task.status = 5
+    await db.flush()
+
+    # 记录证据
+    await log_evidence(
+        db,
+        task_id=task_id,
+        action=EvidenceAction.CONTRACT_REJECTED,
+        user_id=user_id,
+        ip=ip,
+        device=device,
+        detail={"reason": reason, "participant_id": participant.id},
+    )
+
+    participants = await _get_participants(db, task.id)
+    return _task_response(task, participants)
+
+
+async def record_view(
+    db: AsyncSession, task_id: int, user_id: int,
+    ip: str | None = None, device: str | None = None,
+) -> None:
+    """记录签署方查看合同"""
+    await log_evidence(
+        db,
+        task_id=task_id,
+        action=EvidenceAction.SIGNER_VIEWED,
+        user_id=user_id,
+        ip=ip,
+        device=device,
+    )
+
+
+async def verify_document_hash(db: AsyncSession, task_id: int) -> dict:
+    """验证文档哈希完整性"""
+    task = await _get_task(db, task_id)
+    return {
+        "task_id": task_id,
+        "file_hash": task.file_hash,
+        "signed_file_hash": task.signed_file_hash,
+        "file_url": task.file_url,
+        "signed_file_url": task.signed_file_url,
+        "is_original_valid": task.file_hash is not None,
+        "is_signed_valid": task.signed_file_hash is not None if task.status == 3 else None,
+    }
+
+
+async def validate_permission(
+    db: AsyncSession, task_id: int, user_id: int,
+) -> dict:
+    """验证用户是否是合同的签署方"""
+    task = await _get_task(db, task_id)
+    is_creator = task.creator_id == user_id
+    participant = await _find_participant_by_user(db, task_id, user_id)
+    return {
+        "is_creator": is_creator,
+        "is_participant": participant is not None,
+        "participant_status": participant.status if participant else None,
+        "can_sign": participant is not None and participant.status == 0 and task.status == 2,
+    }
+
+
+# ==============================
+# 内部辅助
+# ==============================
+
+async def _find_participant_by_user(
+    db: AsyncSession, task_id: int, user_id: int,
+) -> Optional[SignTaskParticipant]:
+    """根据 user_id 查找签署方（先匹配 member_id，再匹配手机号）"""
+    # 先按 member_id 查
+    result = await db.execute(
+        select(SignTaskParticipant).where(
+            SignTaskParticipant.task_id == task_id,
+            SignTaskParticipant.member_id == user_id,
+        )
+    )
+    participant = result.scalar_one_or_none()
+    if participant:
+        return participant
+
+    # 再按手机号查
+    from app.models.member import Member
+    member_result = await db.execute(select(Member).where(Member.id == user_id))
+    member = member_result.scalar_one_or_none()
+    if not member:
+        return None
+
+    result = await db.execute(
+        select(SignTaskParticipant).where(
+            SignTaskParticipant.task_id == task_id,
+            SignTaskParticipant.mobile == member.mobile,
+        )
+    )
+    participant = result.scalar_one_or_none()
+    if participant and not participant.member_id:
+        # 绑定 member_id
+        participant.member_id = user_id
+        await db.flush()
+    return participant
+
+
+async def _check_all_signed(
+    db: AsyncSession, task: SignTask,
+    ip: str | None = None, device: str | None = None,
+) -> None:
+    """检查是否所有签署方都已签署，如果是则合同状态变为已完成"""
+    # 未签署的数量
+    unsigned_count = (await db.execute(
+        select(func.count()).select_from(SignTaskParticipant)
+        .where(
+            SignTaskParticipant.task_id == task.id,
+            SignTaskParticipant.status == 0,
+        )
+    )).scalar() or 0
+
+    if unsigned_count == 0:
+        task.status = 3  # 已完成
+        task.complete_time = datetime.now()
+
+        # MVP: 用文件 URL 模拟签署后文件哈希
+        if task.file_url:
+            task.signed_file_hash = hashlib.sha256(
+                (task.file_url + ":signed").encode()
+            ).hexdigest()
+
+        await db.flush()
+
+        # 记录证据
+        await log_evidence(
+            db,
+            task_id=task.id,
+            action=EvidenceAction.CONTRACT_COMPLETED,
+            data_hash=task.signed_file_hash,
+            detail={"complete_time": task.complete_time.isoformat()},
+        )

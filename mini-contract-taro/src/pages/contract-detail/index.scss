@@ -74,6 +74,88 @@
   flex-shrink: 0;
 }
 
+/* 证据链 */
+.evidence-section {
+  background: #fff;
+  margin-top: 20px;
+  padding: 24px 32px;
+}
+
+.evidence-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.toggle-btn {
+  font-size: 26px;
+  color: #00C28A;
+}
+
+.evidence-timeline {
+  margin-top: 16px;
+}
+
+.no-evidence {
+  font-size: 26px;
+  color: #999;
+}
+
+.timeline-item {
+  display: flex;
+  padding: 12px 0;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 11px;
+    top: 36px;
+    bottom: -12px;
+    width: 2px;
+    background: #e8e8e8;
+  }
+
+  &:last-child::before {
+    display: none;
+  }
+}
+
+.timeline-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #00C28A;
+  flex-shrink: 0;
+  margin-right: 16px;
+  margin-top: 4px;
+}
+
+.timeline-content {
+  flex: 1;
+}
+
+.timeline-action {
+  display: block;
+  font-size: 28px;
+  color: #333;
+}
+
+.timeline-time {
+  display: block;
+  font-size: 24px;
+  color: #999;
+  margin-top: 4px;
+}
+
+.timeline-ip {
+  display: block;
+  font-size: 22px;
+  color: #bbb;
+  margin-top: 2px;
+}
+
+/* 操作按钮 */
 .action-section {
   padding: 32px;
   display: flex;
