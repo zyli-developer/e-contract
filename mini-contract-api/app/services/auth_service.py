@@ -19,7 +19,6 @@ from app.core.security import (
     verify_password,
 )
 from app.models.member import Member
-from app.models.member_social import MemberSocialUser
 from app.models.member_token import MemberToken
 from app.schemas.auth import AuthTokenResponse
 from app.utils.redis_client import delete_sms_code, get_sms_code
@@ -30,7 +29,8 @@ async def _create_token_record(db: AsyncSession, member_id: int) -> AuthTokenRes
     access_token = create_access_token(member_id)
     refresh_token = create_refresh_token(member_id)
 
-    now = datetime.now(timezone.utc)
+    # 使用 UTC 时间但不带时区信息，与数据库 TIMESTAMP WITHOUT TIME ZONE 列匹配
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
     token_record = MemberToken(
         member_id=member_id,
         access_token=access_token,
@@ -41,7 +41,7 @@ async def _create_token_record(db: AsyncSession, member_id: int) -> AuthTokenRes
     db.add(token_record)
     await db.flush()
 
-    expires_time = int((now + timedelta(hours=settings.ACCESS_TOKEN_EXPIRE_HOURS)).timestamp() * 1000)
+    expires_time = int((now + timedelta(hours=settings.ACCESS_TOKEN_EXPIRE_HOURS)).replace(tzinfo=timezone.utc).timestamp() * 1000)
 
     return AuthTokenResponse(
         accessToken=access_token,
@@ -96,49 +96,6 @@ async def login_by_sms(db: AsyncSession, mobile: str, code: str) -> AuthTokenRes
     await delete_sms_code(mobile, scene=1)
 
     member = await _get_or_create_member_by_mobile(db, mobile)
-    return await _create_token_record(db, member.id)
-
-
-async def login_by_social(db: AsyncSession, social_type: int, code: str) -> AuthTokenResponse:
-    """社交登录（微信小程序）"""
-    from app.services.wechat_service import code2session
-
-    wechat_data = await code2session(code)
-    openid = wechat_data["openid"]
-    unionid = wechat_data.get("unionid")
-
-    # 查找已绑定的社交账户
-    result = await db.execute(
-        select(MemberSocialUser).where(
-            MemberSocialUser.type == social_type,
-            MemberSocialUser.openid == openid,
-        )
-    )
-    social_user = result.scalar_one_or_none()
-
-    if social_user:
-        # 已绑定：直接返回 Token
-        member_result = await db.execute(select(Member).where(Member.id == social_user.member_id))
-        member = member_result.scalar_one_or_none()
-        if not member or member.status == 0:
-            raise BusinessException(code=1012001003, msg="账号已被禁用")
-        return await _create_token_record(db, member.id)
-
-    # 未绑定：创建新用户 + 社交绑定
-    member = Member(nickname="微信用户")
-    db.add(member)
-    await db.flush()
-    await db.refresh(member)
-
-    social_user = MemberSocialUser(
-        member_id=member.id,
-        type=social_type,
-        openid=openid,
-        unionid=unionid,
-    )
-    db.add(social_user)
-    await db.flush()
-
     return await _create_token_record(db, member.id)
 
 

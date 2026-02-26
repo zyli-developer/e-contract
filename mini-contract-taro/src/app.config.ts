@@ -21,14 +21,20 @@ export default defineAppConfig({
       {
         pagePath: 'pages/index/index',
         text: '首页',
+        iconPath: 'assets/tabbar/home.png',
+        selectedIconPath: 'assets/tabbar/home-active.png',
       },
       {
         pagePath: 'pages/contract-manage/index',
         text: '合同',
+        iconPath: 'assets/tabbar/contract.png',
+        selectedIconPath: 'assets/tabbar/contract-active.png',
       },
       {
         pagePath: 'pages/profile/index',
         text: '我的',
+        iconPath: 'assets/tabbar/profile.png',
+        selectedIconPath: 'assets/tabbar/profile-active.png',
       },
     ],
   },

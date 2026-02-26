@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import Taro, { useDidShow } from '@tarojs/taro'
 import { View, Text } from '@tarojs/components'
-import { Button, Empty } from '@nutui/nutui-react-taro'
 import { useRequireAuth } from '@/hooks/useAuth'
 import { getSealList, deleteSeal, setDefaultSeal } from '@/api/seals'
 import './index.scss'
@@ -62,17 +61,19 @@ export default function SealsPage() {
     <View className='seals-page'>
       <View className='header'>
         <Text className='title'>我的签名</Text>
-        <Button
-          type='primary'
-          size='small'
+        <View
+          className='btn btn-primary btn-small'
           onClick={() => Taro.navigateTo({ url: '/pages/profile/seal-create/index' })}
         >
-          创建签名
-        </Button>
+          <Text>创建签名</Text>
+        </View>
       </View>
 
       {seals.length === 0 && !loading ? (
-        <Empty description='暂无签名' />
+        <View className='empty-wrap'>
+          <Text className='empty-icon'>✍️</Text>
+          <Text className='empty-text'>暂无签名</Text>
+        </View>
       ) : (
         <View className='seal-list'>
           {seals.map((seal) => (

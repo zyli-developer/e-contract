@@ -16,12 +16,6 @@ class SendSmsCodeRequest(BaseModel):
     scene: int  # 1=登录, 2=注册, 3=修改密码
 
 
-class SocialLoginRequest(BaseModel):
-    type: int  # 31=公众号, 32=开放平台, 34=小程序
-    code: str
-    state: str = "default"
-
-
 class RefreshTokenRequest(BaseModel):
     refreshToken: str
 

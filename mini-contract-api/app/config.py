@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     API_PREFIX: str = "/app-api"
 
     # 数据库
-    DATABASE_URL: str = "mysql+aiomysql://root:password@localhost:3306/mini_contract"
+    DATABASE_URL: str = "postgresql+asyncpg://postgres:password@localhost:5432/mini_contract"
 
     # Redis
     REDIS_URL: str = "redis://localhost:6379/0"
@@ -21,10 +21,6 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_HOURS: int = 2
     REFRESH_TOKEN_EXPIRE_HOURS: int = 720
-
-    # 微信小程序
-    WECHAT_MINI_APP_ID: str = ""
-    WECHAT_MINI_APP_SECRET: str = ""
 
     # 文件存储
     S3_ENDPOINT: str = ""
@@ -38,7 +34,7 @@ class Settings(BaseSettings):
     SMS_SIGN_NAME: str = ""
     SMS_TEMPLATE_CODE: str = ""
 
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
+    model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}
 
 
 @lru_cache

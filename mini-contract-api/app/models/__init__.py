@@ -1,6 +1,5 @@
 from app.database import Base
 from app.models.member import Member
-from app.models.member_social import MemberSocialUser
 from app.models.member_token import MemberToken
 from app.models.seal_info import SealInfo
 from app.models.seal_template import SealTemplate
@@ -13,7 +12,6 @@ from app.models.infra_file import InfraFile
 __all__ = [
     "Base",
     "Member",
-    "MemberSocialUser",
     "MemberToken",
     "SealInfo",
     "SealTemplate",

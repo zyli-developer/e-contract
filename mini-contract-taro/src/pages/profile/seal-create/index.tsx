@@ -1,7 +1,6 @@
 import { useState, useRef } from 'react'
 import Taro from '@tarojs/taro'
 import { View, Text, Canvas } from '@tarojs/components'
-import { Button, Tabs, Radio } from '@nutui/nutui-react-taro'
 import { useRequireAuth } from '@/hooks/useAuth'
 import { createSeal } from '@/api/seals'
 import './index.scss'
@@ -12,7 +11,6 @@ export default function SealCreatePage() {
   const [sealType, setSealType] = useState(11) // 11=签名 12=印章
   const [loading, setLoading] = useState(false)
 
-  /** 手绘签名 - 使用 Canvas */
   const [isDrawing, setIsDrawing] = useState(false)
   const [hasDrawn, setHasDrawn] = useState(false)
   const pointsRef = useRef<{ x: number; y: number }[]>([])
@@ -29,7 +27,6 @@ export default function SealCreatePage() {
     pointsRef.current.push({ x: touch.x, y: touch.y })
     setHasDrawn(true)
 
-    // 绘制
     const ctx = Taro.createCanvasContext('signCanvas')
     const points = pointsRef.current
     if (points.length >= 2) {
@@ -64,12 +61,10 @@ export default function SealCreatePage() {
     }
     setLoading(true)
     try {
-      // 导出 Canvas 为图片
       const res = await Taro.canvasToTempFilePath({
         canvasId: 'signCanvas',
         fileType: 'png',
       })
-      // MVP: 直接用临时路径作为 seal_data
       await createSeal({
         name: sealType === 11 ? '我的签名' : '我的印章',
         type: sealType,
@@ -84,7 +79,6 @@ export default function SealCreatePage() {
     }
   }
 
-  /** 图片上传 */
   const handleUploadImage = async () => {
     try {
       const chooseRes = await Taro.chooseImage({
@@ -109,65 +103,81 @@ export default function SealCreatePage() {
     }
   }
 
+  const TABS = ['手绘签名', '图片上传']
+
   return (
     <View className='seal-create-page'>
       {/* 类型选择 */}
       <View className='type-section'>
         <Text className='section-label'>签名类型</Text>
-        <Radio.Group
-          value={String(sealType)}
-          direction='horizontal'
-          onChange={(val) => setSealType(Number(val))}
-        >
-          <Radio value='11'>个人签名</Radio>
-          <Radio value='12'>个人印章</Radio>
-        </Radio.Group>
+        <View className='radio-group'>
+          <View
+            className={`radio-item ${sealType === 11 ? 'active' : ''}`}
+            onClick={() => setSealType(11)}
+          >
+            <View className='radio-dot'>{sealType === 11 && <View className='radio-inner' />}</View>
+            <Text className='radio-label'>个人签名</Text>
+          </View>
+          <View
+            className={`radio-item ${sealType === 12 ? 'active' : ''}`}
+            onClick={() => setSealType(12)}
+          >
+            <View className='radio-dot'>{sealType === 12 && <View className='radio-inner' />}</View>
+            <Text className='radio-label'>个人印章</Text>
+          </View>
+        </View>
       </View>
 
-      {/* 创建方式 */}
-      <Tabs value={activeTab} onChange={(val) => setActiveTab(val as number)}>
-        <Tabs.TabPane title='手绘签名'>
-          <View className='canvas-section'>
-            <View className='canvas-wrapper'>
-              <Canvas
-                canvasId='signCanvas'
-                className='sign-canvas'
-                onTouchStart={handleTouchStart}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={handleTouchEnd}
-              />
-              {!hasDrawn && (
-                <Text className='canvas-placeholder'>请在此处签名</Text>
-              )}
-            </View>
-            <View className='canvas-actions'>
-              <Button size='small' onClick={handleClear}>清除</Button>
-              <Button
-                type='primary'
-                size='small'
-                loading={loading}
-                onClick={handleSaveDrawing}
-              >
-                保存签名
-              </Button>
-            </View>
-          </View>
-        </Tabs.TabPane>
+      {/* 创建方式 Tab */}
+      <View className='tab-bar'>
+        {TABS.map((tab, index) => (
+          <Text
+            key={tab}
+            className={`tab-item ${activeTab === index ? 'active' : ''}`}
+            onClick={() => setActiveTab(index)}
+          >
+            {tab}
+          </Text>
+        ))}
+      </View>
 
-        <Tabs.TabPane title='图片上传'>
-          <View className='upload-section'>
-            <Text className='upload-hint'>从相册选择或拍照上传签名图片</Text>
-            <Button
-              type='primary'
-              block
-              loading={loading}
-              onClick={handleUploadImage}
-            >
-              选择图片
-            </Button>
+      {activeTab === 0 ? (
+        <View className='canvas-section'>
+          <View className='canvas-wrapper'>
+            <Canvas
+              canvasId='signCanvas'
+              className='sign-canvas'
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+            />
+            {!hasDrawn && (
+              <Text className='canvas-placeholder'>请在此处签名</Text>
+            )}
           </View>
-        </Tabs.TabPane>
-      </Tabs>
+          <View className='canvas-actions'>
+            <View className='btn btn-default btn-small' onClick={handleClear}>
+              <Text>清除</Text>
+            </View>
+            <View
+              className={`btn btn-primary btn-small ${loading ? 'btn-loading' : ''}`}
+              onClick={loading ? undefined : handleSaveDrawing}
+            >
+              <Text>{loading ? '保存中...' : '保存签名'}</Text>
+            </View>
+          </View>
+        </View>
+      ) : (
+        <View className='upload-section'>
+          <Text className='upload-hint'>从相册选择或拍照上传签名图片</Text>
+          <View
+            className={`btn btn-primary btn-block ${loading ? 'btn-loading' : ''}`}
+            onClick={loading ? undefined : handleUploadImage}
+          >
+            <Text>{loading ? '上传中...' : '选择图片'}</Text>
+          </View>
+        </View>
+      )}
     </View>
   )
 }

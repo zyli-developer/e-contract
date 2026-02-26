@@ -16,8 +16,9 @@ from app.core.middleware import RequestLoggingMiddleware
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # 启动时：自动建表
-    from app.database import engine, init_db
+    from app.database import engine, init_db, seed_admin
     await init_db()
+    await seed_admin()
     yield
     # 关闭时：释放连接池
     from app.utils.redis_client import close_redis

@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import Taro from '@tarojs/taro'
-import { View, Text, ScrollView } from '@tarojs/components'
-import { SearchBar, Tabs, Empty } from '@nutui/nutui-react-taro'
+import { View, Text, ScrollView, Input } from '@tarojs/components'
 import { searchTemplates, getCategories, getHotTemplates } from '@/api/templates'
 import './index.scss'
 
@@ -59,15 +58,13 @@ export default function TemplateMarketPage() {
     }
   }
 
-  const handleCategoryChange = (index: number) => {
-    const cat = categories[index]?.code || ''
-    setActiveCategory(cat)
-    fetchTemplates(cat, keyword)
+  const handleCategoryChange = (code: string) => {
+    setActiveCategory(code)
+    fetchTemplates(code, keyword)
   }
 
-  const handleSearch = (val: string) => {
-    setKeyword(val)
-    fetchTemplates(activeCategory, val)
+  const handleSearch = () => {
+    fetchTemplates(activeCategory, keyword)
   }
 
   const goToDetail = (id: number) => {
@@ -76,47 +73,75 @@ export default function TemplateMarketPage() {
 
   return (
     <View className='template-market'>
-      <SearchBar
-        placeholder='搜索合同模板'
-        value={keyword}
-        onChange={(val) => setKeyword(val)}
-        onSearch={handleSearch}
-      />
+      <View className='search-header'>
+        <View className='search-bar'>
+          <Text className='search-icon'>🔍</Text>
+          <Input
+            className='search-input'
+            placeholder='搜索合同模板'
+            value={keyword}
+            onInput={(e) => setKeyword(e.detail.value)}
+            onConfirm={handleSearch}
+          />
+        </View>
+      </View>
 
       {hotTemplates.length > 0 && !keyword && (
         <View className='hot-section'>
-          <Text className='section-title'>热门模板</Text>
+          <View className='section-header'>
+            <Text className='hot-star'>🔥</Text>
+            <Text className='section-title'>热门模板</Text>
+          </View>
           <ScrollView scrollX className='hot-scroll'>
-            {hotTemplates.map((t) => (
-              <View key={t.id} className='hot-item' onClick={() => goToDetail(t.id)}>
-                <Text className='hot-name'>{t.name}</Text>
-                <Text className='hot-count'>{t.use_count} 次使用</Text>
-              </View>
-            ))}
+            <View className='hot-list-inner'>
+              {hotTemplates.map((t) => (
+                <View key={t.id} className='hot-card' onClick={() => goToDetail(t.id)}>
+                  <Text className='hot-name'>{t.name}</Text>
+                  <View className='hot-footer'>
+                    <Text className='hot-count'>{t.use_count} 次使用</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
           </ScrollView>
         </View>
       )}
 
-      {categories.length > 0 && (
-        <Tabs
-          value={categories.findIndex((c) => c.code === activeCategory)}
-          onChange={handleCategoryChange}
-        >
-          {categories.map((cat) => (
-            <Tabs.TabPane key={cat.code} title={cat.name} />
-          ))}
-        </Tabs>
-      )}
+      <View className='category-tabs'>
+        {categories.length > 0 && (
+          <ScrollView scrollX className='category-scroll'>
+            <View className='category-list'>
+              {categories.map((cat) => (
+                <Text
+                  key={cat.code}
+                  className={`category-item ${activeCategory === cat.code ? 'active' : ''}`}
+                  onClick={() => handleCategoryChange(cat.code)}
+                >
+                  {cat.name}
+                </Text>
+              ))}
+            </View>
+          </ScrollView>
+        )}
+      </View>
 
       <View className='template-list'>
         {templates.length === 0 && !loading ? (
-          <Empty description='暂无模板' />
+          <View className='empty-wrap'>
+            <Text className='empty-icon'>📄</Text>
+            <Text className='empty-text'>暂无相关模板</Text>
+          </View>
         ) : (
           templates.map((t) => (
             <View key={t.id} className='template-card' onClick={() => goToDetail(t.id)}>
-              <Text className='template-name'>{t.name}</Text>
-              {t.description && <Text className='template-desc'>{t.description}</Text>}
-              <Text className='template-count'>{t.use_count} 次使用</Text>
+              <View className='card-main'>
+                <Text className='template-name'>{t.name}</Text>
+                {t.description && <Text className='template-desc'>{t.description}</Text>}
+              </View>
+              <View className='card-footer'>
+                <Text className='category-tag'>{t.category || '通用'}</Text>
+                <Text className='use-count'>{t.use_count} 人已用</Text>
+              </View>
             </View>
           ))
         )}
