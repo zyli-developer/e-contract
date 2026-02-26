@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import Taro from '@tarojs/taro'
-import { View, Text } from '@tarojs/components'
-import { Button, Input, Tabs } from '@nutui/nutui-react-taro'
-import { login, smsLogin, sendSmsCode, socialLogin } from '@/api/auth'
+import { View, Text, Input } from '@tarojs/components'
+import { login, smsLogin, sendSmsCode } from '@/api/auth'
 import { useAuthStore } from '@/store/useAuthStore'
 import './index.scss'
 
+type TabType = 'password' | 'sms'
+
 export default function LoginPage() {
-  const [activeTab, setActiveTab] = useState(0)
+  const [activeTab, setActiveTab] = useState<TabType>('password')
   const [mobile, setMobile] = useState('')
   const [password, setPassword] = useState('')
   const [smsCode, setSmsCode] = useState('')
@@ -20,7 +21,6 @@ export default function LoginPage() {
     setTokens(data.accessToken, data.refreshToken)
     setUserId(data.userId)
     Taro.showToast({ title: '登录成功', icon: 'success' })
-    // 返回上一页或跳转首页
     const pages = Taro.getCurrentPages()
     if (pages.length > 1) {
       Taro.navigateBack()
@@ -29,7 +29,6 @@ export default function LoginPage() {
     }
   }
 
-  /** 密码登录 */
   const handlePasswordLogin = async () => {
     if (!mobile || !password) {
       Taro.showToast({ title: '请输入手机号和密码', icon: 'none' })
@@ -46,7 +45,6 @@ export default function LoginPage() {
     }
   }
 
-  /** 短信验证码登录 */
   const handleSmsLogin = async () => {
     if (!mobile || !smsCode) {
       Taro.showToast({ title: '请输入手机号和验证码', icon: 'none' })
@@ -63,7 +61,6 @@ export default function LoginPage() {
     }
   }
 
-  /** 发送验证码 */
   const handleSendCode = async () => {
     if (!mobile) {
       Taro.showToast({ title: '请输入手机号', icon: 'none' })
@@ -88,120 +85,138 @@ export default function LoginPage() {
     }
   }
 
-  /** 微信一键登录 */
-  const handleWechatLogin = () => {
-    setLoading(true)
-    Taro.login({
-      success: async (res) => {
-        try {
-          const data = await socialLogin({ type: 34, code: res.code })
-          handleLoginSuccess(data)
-        } catch (e: any) {
-          Taro.showToast({ title: e.message || '微信登录失败', icon: 'none' })
-        } finally {
-          setLoading(false)
-        }
-      },
-      fail: () => {
-        setLoading(false)
-        Taro.showToast({ title: '微信登录授权失败', icon: 'none' })
-      },
-    })
-  }
-
   return (
-    <View className='login-page'>
-      <View className='login-header'>
-        <Text className='login-title'>Mini Contract</Text>
-        <Text className='login-subtitle'>电子合同签署平台</Text>
+    <View className='login-page flex flex-col items-center min-h-screen'>
+      {/* Header */}
+      <View className='w-full pt-[100px] pb-[60px] text-center'>
+        <View className='inline-flex items-center justify-center w-[140px] h-[140px] rounded-[40px] bg-white/25 mb-[32px] shadow-lg'>
+          <Text className='text-white text-[56px] font-black tracking-[4px]'>MC</Text>
+        </View>
+        <Text className='block text-[44px] font-extrabold text-white mb-[12px] tracking-[2px]'>Mini Contract</Text>
+        <Text className='block text-[26px] text-white/85 tracking-[1px]'>电子合同签署平台</Text>
       </View>
 
-      {/* 微信一键登录 */}
-      <View className='wechat-login'>
-        <Button
-          type='primary'
-          block
-          loading={loading}
-          onClick={handleWechatLogin}
-        >
-          微信一键登录
-        </Button>
-      </View>
-
-      <View className='divider'>
-        <View className='divider-line' />
-        <Text className='divider-text'>或</Text>
-        <View className='divider-line' />
-      </View>
-
-      {/* 手机号登录 */}
-      <Tabs value={activeTab} onChange={(val) => setActiveTab(val as number)}>
-        <Tabs.TabPane title='密码登录'>
-          <View className='form'>
-            <Input
-              placeholder='请输入手机号'
-              type='number'
-              maxLength={11}
-              value={mobile}
-              onChange={(val) => setMobile(val)}
-            />
-            <Input
-              placeholder='请输入密码'
-              type='password'
-              value={password}
-              onChange={(val) => setPassword(val)}
-            />
-            <Button
-              type='primary'
-              block
-              loading={loading}
-              onClick={handlePasswordLogin}
-              className='login-btn'
-            >
-              登录
-            </Button>
+      {/* Card */}
+      <View className='w-[calc(100%-64px)] mx-[32px] bg-white rounded-[40px] px-[48px] pt-[60px] pb-[48px] shadow-xl'>
+        {/* Tabs */}
+        <View className='flex mb-[48px] bg-[#f5f7fa] rounded-[20px] p-[8px]'>
+          <View
+            className={`flex-1 text-center py-[20px] text-[28px] rounded-[16px] ${
+              activeTab === 'password'
+                ? 'text-brand font-extrabold bg-white shadow-sm'
+                : 'text-[#999]'
+            }`}
+            onClick={() => setActiveTab('password')}
+          >
+            <Text>密码登录</Text>
           </View>
-        </Tabs.TabPane>
+          <View
+            className={`flex-1 text-center py-[20px] text-[28px] rounded-[16px] ${
+              activeTab === 'sms'
+                ? 'text-brand font-extrabold bg-white shadow-sm'
+                : 'text-[#999]'
+            }`}
+            onClick={() => setActiveTab('sms')}
+          >
+            <Text>验证码登录</Text>
+          </View>
+        </View>
 
-        <Tabs.TabPane title='验证码登录'>
-          <View className='form'>
-            <Input
-              placeholder='请输入手机号'
-              type='number'
-              maxLength={11}
-              value={mobile}
-              onChange={(val) => setMobile(val)}
-            />
-            <View className='sms-row'>
-              <Input
-                placeholder='请输入验证码'
-                type='number'
-                maxLength={6}
-                value={smsCode}
-                onChange={(val) => setSmsCode(val)}
-                className='sms-input'
-              />
-              <Button
-                size='small'
-                disabled={countdown > 0}
-                onClick={handleSendCode}
-                className='sms-btn'
-              >
-                {countdown > 0 ? `${countdown}s` : '获取验证码'}
-              </Button>
+        {/* Password Form */}
+        {activeTab === 'password' ? (
+          <View>
+            <View className='mb-[32px]'>
+              <Text className='block text-[24px] text-[#888] mb-[16px] pl-[8px] font-semibold'>手机号</Text>
+              <View className='bg-[#f7f8fa] rounded-[20px] px-[32px] h-[96px] flex items-center'>
+                <Input
+                  className='w-full h-[96px] text-[30px] text-[#333] bg-transparent'
+                  type='number'
+                  placeholder='请输入11位手机号'
+                  maxlength={11}
+                  value={mobile}
+                  onInput={(e) => setMobile(e.detail.value)}
+                />
+              </View>
             </View>
-            <Button
-              type='primary'
-              block
-              loading={loading}
-              onClick={handleSmsLogin}
-              className='login-btn'
+            <View className='mb-[32px]'>
+              <Text className='block text-[24px] text-[#888] mb-[16px] pl-[8px] font-semibold'>密码</Text>
+              <View className='bg-[#f7f8fa] rounded-[20px] px-[32px] h-[96px] flex items-center'>
+                <Input
+                  className='w-full h-[96px] text-[30px] text-[#333] bg-transparent'
+                  password
+                  placeholder='请输入登录密码'
+                  value={password}
+                  onInput={(e) => setPassword(e.detail.value)}
+                />
+              </View>
+            </View>
+            <View
+              className='mt-[48px] w-full h-[100px] rounded-full flex items-center justify-center submit-btn'
+              onClick={handlePasswordLogin}
             >
-              登录
-            </Button>
+              <Text className='text-[32px] font-bold text-white tracking-[4px]'>{loading ? '登录中...' : '登 录'}</Text>
+            </View>
           </View>
-        </Tabs.TabPane>
-      </Tabs>
+        ) : (
+          <View>
+            <View className='mb-[32px]'>
+              <Text className='block text-[24px] text-[#888] mb-[16px] pl-[8px] font-semibold'>手机号</Text>
+              <View className='bg-[#f7f8fa] rounded-[20px] px-[32px] h-[96px] flex items-center'>
+                <Input
+                  className='w-full h-[96px] text-[30px] text-[#333] bg-transparent'
+                  type='number'
+                  placeholder='请输入11位手机号'
+                  maxlength={11}
+                  value={mobile}
+                  onInput={(e) => setMobile(e.detail.value)}
+                />
+              </View>
+            </View>
+            <View className='mb-[32px]'>
+              <Text className='block text-[24px] text-[#888] mb-[16px] pl-[8px] font-semibold'>验证码</Text>
+              <View className='flex items-center gap-[20px]'>
+                <View className='flex-1 bg-[#f7f8fa] rounded-[20px] px-[32px] h-[96px] flex items-center'>
+                  <Input
+                    className='w-full h-[96px] text-[30px] text-[#333] bg-transparent'
+                    type='number'
+                    placeholder='请输入验证码'
+                    maxlength={6}
+                    value={smsCode}
+                    onInput={(e) => setSmsCode(e.detail.value)}
+                  />
+                </View>
+                <View
+                  className={`shrink-0 h-[96px] px-[28px] rounded-[20px] flex items-center justify-center border-[2px] ${
+                    countdown > 0
+                      ? 'bg-[#f5f5f5] border-transparent'
+                      : 'bg-[#f0faf6] border-[#d4f0e5]'
+                  }`}
+                  onClick={handleSendCode}
+                >
+                  <Text className={`text-[24px] font-semibold whitespace-nowrap ${
+                    countdown > 0 ? 'text-[#ccc]' : 'text-brand'
+                  }`}>
+                    {countdown > 0 ? `${countdown}s` : '获取验证码'}
+                  </Text>
+                </View>
+              </View>
+            </View>
+            <View
+              className='mt-[48px] w-full h-[100px] rounded-full flex items-center justify-center submit-btn'
+              onClick={handleSmsLogin}
+            >
+              <Text className='text-[32px] font-bold text-white tracking-[4px]'>{loading ? '登录中...' : '登 录'}</Text>
+            </View>
+          </View>
+        )}
+      </View>
+
+      {/* Footer */}
+      <View className='w-full py-[60px] pb-[80px] text-center'>
+        <Text className='text-[24px] text-[#ccc]'>
+          登录即同意 <Text className='text-brand font-medium'>用户协议</Text> 和 <Text className='text-brand font-medium'>隐私政策</Text>
+        </Text>
+      </View>
     </View>
   )
 }

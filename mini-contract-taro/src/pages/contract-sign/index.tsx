@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import Taro, { useRouter } from '@tarojs/taro'
 import { View, Text, Input, WebView } from '@tarojs/components'
-import { Button } from '@nutui/nutui-react-taro'
 import { SIGN_H5_URL } from '@/api/config'
 import {
   getContractDetail,
@@ -24,7 +23,6 @@ export default function ContractSignPage() {
   const [detail, setDetail] = useState<any>(null)
   const [step, setStep] = useState<Step>('info')
 
-  // 验证码相关
   const [code, setCode] = useState('')
   const [countdown, setCountdown] = useState(0)
   const [verifying, setVerifying] = useState(false)
@@ -77,9 +75,7 @@ export default function ContractSignPage() {
     }
     setVerifying(true)
     try {
-      // 1. 验证验证码
       await verifySignCode(contractId, code)
-      // 2. 执行签署
       await executeSign(contractId)
       Taro.showToast({ title: '签署成功', icon: 'success' })
       setStep('result')
@@ -111,7 +107,6 @@ export default function ContractSignPage() {
     }
   }
 
-  // 签署结果页
   if (step === 'result') {
     return (
       <View className='contract-sign result-page'>
@@ -122,7 +117,6 @@ export default function ContractSignPage() {
     )
   }
 
-  // WebView 签署（备用入口）
   if (step === 'signing') {
     const signUrl = `${SIGN_H5_URL}/sign?taskId=${contractId}&token=${token}`
     return <WebView src={signUrl} onMessage={handleWebViewMessage} />
@@ -132,7 +126,6 @@ export default function ContractSignPage() {
     return <View className='contract-sign'><Text>加载中...</Text></View>
   }
 
-  // 验证码确认步骤
   if (step === 'verify') {
     return (
       <View className='contract-sign'>
@@ -159,15 +152,12 @@ export default function ContractSignPage() {
             </Text>
           </View>
 
-          <Button
-            type='primary'
-            block
-            loading={verifying}
-            disabled={code.length !== 6}
-            onClick={handleVerifyAndSign}
+          <View
+            className={`btn btn-primary btn-block ${verifying ? 'btn-loading' : ''} ${code.length !== 6 ? 'btn-disabled' : ''}`}
+            onClick={!verifying && code.length === 6 ? handleVerifyAndSign : undefined}
           >
-            确认签署
-          </Button>
+            <Text>{verifying ? '签署中...' : '确认签署'}</Text>
+          </View>
 
           <Text className='back-link' onClick={() => setStep('info')}>返回合同信息</Text>
         </View>
@@ -175,7 +165,6 @@ export default function ContractSignPage() {
     )
   }
 
-  // 合同信息页（默认）
   return (
     <View className='contract-sign'>
       <View className='sign-header'>
@@ -196,12 +185,12 @@ export default function ContractSignPage() {
       </View>
 
       <View className='sign-action'>
-        <Button type='primary' block onClick={handleStartSign}>
-          开始签署
-        </Button>
-        <Button block onClick={handleReject} className='reject-btn'>
-          拒签
-        </Button>
+        <View className='btn btn-primary btn-block' onClick={handleStartSign}>
+          <Text>开始签署</Text>
+        </View>
+        <View className='btn btn-default btn-block reject-btn' onClick={handleReject}>
+          <Text>拒签</Text>
+        </View>
       </View>
     </View>
   )

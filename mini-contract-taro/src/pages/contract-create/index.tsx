@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import Taro from '@tarojs/taro'
-import { View, Text } from '@tarojs/components'
-import { Button, Input } from '@nutui/nutui-react-taro'
+import { View, Text, Input } from '@tarojs/components'
 import { useRequireAuth } from '@/hooks/useAuth'
 import { createContract } from '@/api/contracts'
 import './index.scss'
@@ -46,7 +45,6 @@ export default function ContractCreatePage() {
       return
     }
 
-    // 校验签署方
     for (const p of participants) {
       if (!p.name.trim() || !p.mobile.trim()) {
         Taro.showToast({ title: '请完善签署方信息', icon: 'none' })
@@ -81,11 +79,15 @@ export default function ContractCreatePage() {
         <Text className='section-title'>创建方式</Text>
         <View className='create-options'>
           <View className='option-card' onClick={handleFromTemplate}>
-            <Text className='option-icon'>T</Text>
+            <View className='option-icon template'>
+              <Text>🔍</Text>
+            </View>
             <Text className='option-label'>从模板创建</Text>
           </View>
           <View className='option-card active'>
-            <Text className='option-icon'>F</Text>
+            <View className='option-icon file'>
+              <Text>📄</Text>
+            </View>
             <Text className='option-label'>上传文件创建</Text>
           </View>
         </View>
@@ -97,17 +99,19 @@ export default function ContractCreatePage() {
         <View className='form-item'>
           <Text className='form-label'>合同名称 <Text className='required'>*</Text></Text>
           <Input
+            className='custom-input'
             placeholder='请输入合同名称'
             value={name}
-            onChange={(val) => setName(val)}
+            onInput={(e) => setName(e.detail.value)}
           />
         </View>
         <View className='form-item'>
           <Text className='form-label'>备注</Text>
           <Input
+            className='custom-input'
             placeholder='请输入备注（选填）'
             value={remark}
-            onChange={(val) => setRemark(val)}
+            onInput={(e) => setRemark(e.detail.value)}
           />
         </View>
       </View>
@@ -116,40 +120,51 @@ export default function ContractCreatePage() {
       <View className='section'>
         <View className='section-header'>
           <Text className='section-title'>签署方</Text>
-          <Button size='small' onClick={addParticipant}>添加签署方</Button>
+          <View className='btn btn-primary btn-small' onClick={addParticipant}>
+            <Text>添加签署方</Text>
+          </View>
         </View>
 
         {participants.map((p, index) => (
           <View key={index} className='participant-card'>
             <View className='participant-header'>
               <Text className='participant-num'>签署方 {index + 1}</Text>
-              <Text className='remove-btn' onClick={() => removeParticipant(index)}>删除</Text>
+              <Text className='remove-icon' onClick={() => removeParticipant(index)}>✕</Text>
             </View>
-            <Input
-              placeholder='姓名'
-              value={p.name}
-              onChange={(val) => updateParticipant(index, 'name', val)}
-            />
-            <Input
-              placeholder='手机号'
-              type='number'
-              maxLength={11}
-              value={p.mobile}
-              onChange={(val) => updateParticipant(index, 'mobile', val)}
-            />
+            <View className='p-form'>
+              <Input
+                className='p-input'
+                placeholder='姓名'
+                value={p.name}
+                onInput={(e) => updateParticipant(index, 'name', e.detail.value)}
+              />
+              <Input
+                className='p-input'
+                placeholder='手机号'
+                type='number'
+                maxlength={11}
+                value={p.mobile}
+                onInput={(e) => updateParticipant(index, 'mobile', e.detail.value)}
+              />
+            </View>
           </View>
         ))}
 
         {participants.length === 0 && (
-          <Text className='empty-hint'>暂未添加签署方</Text>
+          <View className='empty-state'>
+            <Text className='empty-hint'>暂未添加签署方</Text>
+          </View>
         )}
       </View>
 
       {/* 提交 */}
       <View className='bottom-bar'>
-        <Button type='primary' block loading={loading} onClick={handleSubmit}>
-          创建合同
-        </Button>
+        <View
+          className={`btn btn-primary btn-block ${loading ? 'btn-loading' : ''}`}
+          onClick={loading ? undefined : handleSubmit}
+        >
+          <Text>{loading ? '创建中...' : '立即创建合同'}</Text>
+        </View>
       </View>
     </View>
   )

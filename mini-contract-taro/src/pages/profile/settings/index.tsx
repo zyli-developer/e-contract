@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import Taro from '@tarojs/taro'
-import { View, Text } from '@tarojs/components'
-import { Input, Button, Cell } from '@nutui/nutui-react-taro'
+import { View, Text, Input } from '@tarojs/components'
 import { useRequireAuth } from '@/hooks/useAuth'
 import { useAuthStore } from '@/store/useAuthStore'
 import { updateUserInfo, updatePassword } from '@/api/member'
@@ -18,7 +17,6 @@ export default function SettingsPage() {
   const [countdown, setCountdown] = useState(0)
   const [loading, setLoading] = useState(false)
 
-  /** 保存昵称 */
   const handleSaveNickname = async () => {
     if (!nickname.trim()) {
       Taro.showToast({ title: '昵称不能为空', icon: 'none' })
@@ -36,7 +34,6 @@ export default function SettingsPage() {
     }
   }
 
-  /** 发送验证码 */
   const handleSendCode = async () => {
     if (countdown > 0) return
     try {
@@ -57,7 +54,6 @@ export default function SettingsPage() {
     }
   }
 
-  /** 修改密码 */
   const handleChangePassword = async () => {
     if (!newPassword || newPassword.length < 6) {
       Taro.showToast({ title: '密码长度不能少于 6 位', icon: 'none' })
@@ -94,63 +90,56 @@ export default function SettingsPage() {
           <Text className='form-label'>昵称</Text>
           <Input
             value={nickname}
-            onChange={(val) => setNickname(val)}
+            onInput={(e) => setNickname(e.detail.value)}
             placeholder='请输入昵称'
             className='form-input'
           />
         </View>
-        <Button
-          type='primary'
-          size='small'
-          loading={loading}
-          onClick={handleSaveNickname}
-          className='save-btn'
+        <View
+          className={`btn btn-primary btn-small save-btn ${loading ? 'btn-loading' : ''}`}
+          onClick={loading ? undefined : handleSaveNickname}
         >
-          保存
-        </Button>
+          <Text>{loading ? '保存中...' : '保存'}</Text>
+        </View>
       </View>
 
       {/* 修改密码 */}
       <View className='section'>
-        <Cell
-          title='修改密码'
-          extra={showPasswordForm ? '' : '>'}
-          onClick={() => setShowPasswordForm(!showPasswordForm)}
-        />
+        <View className='password-header' onClick={() => setShowPasswordForm(!showPasswordForm)}>
+          <Text className='section-title pw-title'>修改密码</Text>
+          <Text className='toggle-arrow'>{showPasswordForm ? '▲' : '›'}</Text>
+        </View>
         {showPasswordForm && (
           <View className='password-form'>
             <Input
+              className='pw-input'
               placeholder='请输入新密码（至少 6 位）'
-              type='password'
+              password
               value={newPassword}
-              onChange={(val) => setNewPassword(val)}
+              onInput={(e) => setNewPassword(e.detail.value)}
             />
             <View className='sms-row'>
               <Input
+                className='sms-input'
                 placeholder='请输入验证码'
                 type='number'
-                maxLength={6}
+                maxlength={6}
                 value={smsCode}
-                onChange={(val) => setSmsCode(val)}
-                className='sms-input'
+                onInput={(e) => setSmsCode(e.detail.value)}
               />
-              <Button
-                size='small'
-                disabled={countdown > 0}
-                onClick={handleSendCode}
-                className='sms-btn'
+              <View
+                className={`btn btn-default btn-small sms-btn ${countdown > 0 ? 'btn-disabled' : ''}`}
+                onClick={countdown > 0 ? undefined : handleSendCode}
               >
-                {countdown > 0 ? `${countdown}s` : '获取验证码'}
-              </Button>
+                <Text>{countdown > 0 ? `${countdown}s` : '获取验证码'}</Text>
+              </View>
             </View>
-            <Button
-              type='primary'
-              block
-              loading={loading}
-              onClick={handleChangePassword}
+            <View
+              className={`btn btn-primary btn-block ${loading ? 'btn-loading' : ''}`}
+              onClick={loading ? undefined : handleChangePassword}
             >
-              确认修改
-            </Button>
+              <Text>{loading ? '修改中...' : '确认修改'}</Text>
+            </View>
           </View>
         )}
       </View>

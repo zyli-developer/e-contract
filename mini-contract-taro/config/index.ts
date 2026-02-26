@@ -1,5 +1,6 @@
 import path from 'path'
 import { defineConfig } from '@tarojs/cli'
+import { UnifiedWebpackPluginV5 } from 'weapp-tailwindcss/webpack'
 import devConfig from './dev'
 import prodConfig from './prod'
 
@@ -21,10 +22,21 @@ export default defineConfig(async (merge) => {
     outputRoot: 'dist',
     plugins: [],
     defineConstants: {},
-    copy: { patterns: [], options: {} },
+    copy: {
+      patterns: [
+        { from: 'src/assets/', to: 'dist/assets/' },
+      ],
+      options: {},
+    },
     framework: 'react',
-    compiler: 'webpack5',
+    compiler: {
+      type: 'webpack5',
+      prebundle: { enable: false },
+    },
     mini: {
+      webpackChain(chain) {
+        chain.plugin('weapp-tailwindcss').use(UnifiedWebpackPluginV5)
+      },
       postcss: {
         pxtransform: { enable: true, config: {} },
         cssModules: {

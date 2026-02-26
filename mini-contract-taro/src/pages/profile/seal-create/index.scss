@@ -18,6 +18,79 @@
   flex-shrink: 0;
 }
 
+.radio-group {
+  display: flex;
+  gap: 32px;
+}
+
+.radio-item {
+  display: flex;
+  align-items: center;
+}
+
+.radio-dot {
+  width: 36px;
+  height: 36px;
+  border-radius: 18px;
+  border: 3px solid #ddd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 8px;
+  transition: border-color 0.2s;
+}
+
+.radio-item.active .radio-dot {
+  border-color: #00C28A;
+}
+
+.radio-inner {
+  width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  background: #00C28A;
+}
+
+.radio-label {
+  font-size: 28px;
+  color: #333;
+}
+
+.tab-bar {
+  display: flex;
+  background: #fff;
+  height: 88px;
+  align-items: center;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.tab-item {
+  flex: 1;
+  text-align: center;
+  font-size: 28px;
+  color: #999;
+  padding: 16px 0;
+  position: relative;
+  transition: color 0.2s;
+
+  &.active {
+    color: #00C28A;
+    font-weight: 800;
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 40px;
+      height: 6px;
+      background: #00C28A;
+      border-radius: 3px;
+    }
+  }
+}
+
 .canvas-section {
   padding: 24px 32px;
 }

@@ -15,11 +15,6 @@ export function sendSmsCode(data: { mobile: string; scene: number }) {
   return request({ url: '/member/auth/send-sms-code', method: 'POST', data, isAuth: false })
 }
 
-/** 社交登录 */
-export function socialLogin(data: { type: number; code: string; state?: string }) {
-  return request({ url: '/member/auth/social-login', method: 'POST', data, isAuth: false })
-}
-
 /** 退出登录 */
 export function logout() {
   return request({ url: '/member/auth/logout', method: 'POST' })

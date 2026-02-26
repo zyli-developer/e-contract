@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import Taro, { useRouter } from '@tarojs/taro'
-import { View, Text, RichText } from '@tarojs/components'
-import { Button, Input } from '@nutui/nutui-react-taro'
+import { View, Text, RichText, Input } from '@tarojs/components'
 import { getTemplateDetail } from '@/api/templates'
 import { createContract } from '@/api/contracts'
 import './index.scss'
@@ -91,9 +90,10 @@ export default function TemplateDetailPage() {
                 {v.required && <Text className='required'>*</Text>}
               </Text>
               <Input
+                className='form-input'
                 placeholder={`请输入${v.label}`}
                 value={variables[v.key] || ''}
-                onChange={(val) => setVariables((prev) => ({ ...prev, [v.key]: val }))}
+                onInput={(e) => setVariables((prev) => ({ ...prev, [v.key]: e.detail.value }))}
               />
             </View>
           ))}
@@ -101,9 +101,12 @@ export default function TemplateDetailPage() {
       )}
 
       <View className='bottom-bar'>
-        <Button type='primary' block loading={loading} onClick={handleUseTemplate}>
-          使用此模板创建合同
-        </Button>
+        <View
+          className={`btn btn-primary btn-block ${loading ? 'btn-loading' : ''}`}
+          onClick={loading ? undefined : handleUseTemplate}
+        >
+          <Text>{loading ? '创建中...' : '使用此模板创建合同'}</Text>
+        </View>
       </View>
     </View>
   )

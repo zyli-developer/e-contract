@@ -9,7 +9,6 @@ from app.schemas.auth import (
     RefreshTokenRequest,
     SendSmsCodeRequest,
     SmsLoginRequest,
-    SocialLoginRequest,
 )
 from app.services import auth_service
 from app.services.sms_service import send_sms_code as sms_send
@@ -36,13 +35,6 @@ async def send_sms_code(req: SendSmsCodeRequest):
     """发送短信验证码"""
     await sms_send(req.mobile, req.scene)
     return ApiResponse.success()
-
-
-@router.post("/social-login")
-async def social_login(req: SocialLoginRequest, db: AsyncSession = Depends(get_db)):
-    """社交登录（微信小程序）"""
-    result = await auth_service.login_by_social(db, req.type, req.code)
-    return ApiResponse.success(data=result.model_dump())
 
 
 @router.post("/refresh-token")

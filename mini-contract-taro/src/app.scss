@@ -1,3 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+// Common button styles
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 48px;
+  font-weight: 700;
+  font-size: 30px;
+  height: 96px;
+  transition: opacity 0.2s;
+  &:active { opacity: 0.8; }
+  &-primary { background: #00C28A; color: #fff; }
+  &-success { background: #52c41a; color: #fff; }
+  &-default { background: #f5f7fa; color: #666; }
+  &-small { height: 64px; font-size: 26px; border-radius: 32px; padding: 0 32px; }
+  &-block { width: 100%; }
+  &-disabled { opacity: 0.5; pointer-events: none; }
+  &-loading { opacity: 0.7; pointer-events: none; }
+}
+
+// Status tags
+.status-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 16px;
+  border-radius: 8px;
+  font-size: 22px;
+  font-weight: 500;
+  &-default { background: #f5f5f5; color: #999; }
+  &-primary { background: #e6f7ff; color: #1890ff; }
+  &-success { background: #f6ffed; color: #52c41a; }
+  &-warning { background: #fffbe6; color: #fa8c16; }
+  &-danger { background: #fff2f0; color: #ff4d4f; }
+}
+
 // 全局样式
 page {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,

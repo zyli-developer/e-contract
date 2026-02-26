@@ -49,13 +49,6 @@ async def test_send_sms_code_missing_fields(client):
 
 
 @pytest.mark.asyncio
-async def test_social_login_missing_fields(client):
-    """社交登录缺少字段应返回 422"""
-    resp = await client.post("/app-api/member/auth/social-login", json={})
-    assert resp.status_code == 422
-
-
-@pytest.mark.asyncio
 async def test_refresh_token_missing_fields(client):
     """刷新 Token 缺少字段应返回 422"""
     resp = await client.post("/app-api/member/auth/refresh-token", json={})

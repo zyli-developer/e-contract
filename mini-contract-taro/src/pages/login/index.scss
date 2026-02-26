@@ -1,69 +1,9 @@
+/* Styles that Tailwind can't express inline */
 .login-page {
-  padding: 60px 32px 32px;
-  min-height: 100vh;
-  background: #fff;
+  background: linear-gradient(160deg, #00C28A 0%, #00a876 30%, #f7f8fa 30.1%, #f7f8fa 100%);
 }
 
-.login-header {
-  text-align: center;
-  margin-bottom: 60px;
-}
-
-.login-title {
-  display: block;
-  font-size: 48px;
-  font-weight: bold;
-  color: #00C28A;
-  margin-bottom: 12px;
-}
-
-.login-subtitle {
-  display: block;
-  font-size: 28px;
-  color: #999;
-}
-
-.wechat-login {
-  margin-bottom: 40px;
-}
-
-.divider {
-  display: flex;
-  align-items: center;
-  margin: 32px 0;
-}
-
-.divider-line {
-  flex: 1;
-  height: 1px;
-  background: #eee;
-}
-
-.divider-text {
-  padding: 0 20px;
-  font-size: 24px;
-  color: #999;
-}
-
-.form {
-  padding: 20px 0;
-}
-
-.login-btn {
-  margin-top: 32px;
-}
-
-.sms-row {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.sms-input {
-  flex: 1;
-}
-
-.sms-btn {
-  flex-shrink: 0;
-  white-space: nowrap;
+.submit-btn {
+  background: linear-gradient(135deg, #00C28A, #00a876);
+  box-shadow: 0 8px 24px rgba(0, 194, 138, 0.25);
 }

@@ -1,7 +1,6 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import Taro, { useDidShow } from '@tarojs/taro'
 import { View, Text } from '@tarojs/components'
-import { Tabs, Empty } from '@nutui/nutui-react-taro'
 import { useAuth } from '@/hooks/useAuth'
 import { usePagination } from '@/hooks/usePagination'
 import { getContractList } from '@/api/contracts'
@@ -14,13 +13,13 @@ const STATUS_TABS = [
   { label: '已完成', value: 3 },
 ]
 
-const STATUS_MAP: Record<number, { text: string; color: string }> = {
-  1: { text: '草稿', color: '#999' },
-  2: { text: '签署中', color: '#fa8c16' },
-  3: { text: '已完成', color: '#00C28A' },
-  4: { text: '已取消', color: '#ff4d4f' },
-  5: { text: '已拒签', color: '#ff4d4f' },
-  6: { text: '已过期', color: '#999' },
+const STATUS_MAP: Record<number, { text: string; type: string }> = {
+  1: { text: '草稿', type: 'default' },
+  2: { text: '签署中', type: 'warning' },
+  3: { text: '已完成', type: 'success' },
+  4: { text: '已取消', type: 'danger' },
+  5: { text: '已拒签', type: 'danger' },
+  6: { text: '已过期', type: 'default' },
 }
 
 export default function ContractManagePage() {
@@ -30,11 +29,16 @@ export default function ContractManagePage() {
 
   const { list, loading, hasMore, refresh, loadMore } = usePagination({
     fetchFn: async (params) => {
-      const data = await getContractList({
-        ...params,
-        status: statusFilter,
-      })
-      return data || { list: [], total: 0 }
+      try {
+        const data = await getContractList({
+          ...params,
+          ...(statusFilter != null ? { status: statusFilter } : {}),
+        })
+        return data || { list: [], total: 0 }
+      } catch (e: any) {
+        Taro.showToast({ title: e.message || '获取列表失败', icon: 'none' })
+        return { list: [], total: 0 }
+      }
     },
   })
 
@@ -42,23 +46,23 @@ export default function ContractManagePage() {
     if (isLoggedIn) refresh()
   })
 
-  const handleTabChange = (index: number) => {
+  const handleTabChange = useCallback((index: number) => {
     setActiveTab(index)
     setStatusFilter(STATUS_TABS[index].value)
-    // 切换 tab 后刷新
-    setTimeout(() => refresh(), 0)
-  }
+    setTimeout(() => refresh(), 50)
+  }, [refresh])
 
   if (!isLoggedIn) {
     return (
       <View className='contract-manage'>
         <View className='login-prompt'>
-          <Text className='prompt-text'>请先登录查看合同</Text>
+          <Text className='prompt-icon'>📋</Text>
+          <Text className='prompt-text'>登录后即可管理您的电子合同</Text>
           <Text
             className='login-link'
             onClick={() => Taro.navigateTo({ url: '/pages/login/index' })}
           >
-            去登录
+            立即登录
           </Text>
         </View>
       </View>
@@ -67,15 +71,26 @@ export default function ContractManagePage() {
 
   return (
     <View className='contract-manage'>
-      <Tabs value={activeTab} onChange={handleTabChange}>
-        {STATUS_TABS.map((tab) => (
-          <Tabs.TabPane key={tab.label} title={tab.label} />
-        ))}
-      </Tabs>
+      <View className='tabs-wrapper'>
+        <View className='tab-bar'>
+          {STATUS_TABS.map((tab, index) => (
+            <Text
+              key={tab.label}
+              className={`tab-item ${activeTab === index ? 'active' : ''}`}
+              onClick={() => handleTabChange(index)}
+            >
+              {tab.label}
+            </Text>
+          ))}
+        </View>
+      </View>
 
       <View className='contract-list'>
         {list.length === 0 && !loading ? (
-          <Empty description='暂无合同' />
+          <View className='empty-container'>
+            <Text className='empty-icon'>📄</Text>
+            <Text className='empty-text'>暂无合同记录</Text>
+          </View>
         ) : (
           list.map((item: any) => (
             <View
@@ -86,27 +101,38 @@ export default function ContractManagePage() {
               }
             >
               <View className='card-header'>
-                <Text className='contract-name'>{item.name}</Text>
-                <Text
-                  className='contract-status'
-                  style={{ color: STATUS_MAP[item.status]?.color }}
-                >
+                <View className='title-area'>
+                  <Text className='title-icon'>📋</Text>
+                  <Text className='contract-name'>{item.name}</Text>
+                </View>
+                <Text className={`status-tag status-tag-${STATUS_MAP[item.status]?.type || 'default'}`}>
                   {STATUS_MAP[item.status]?.text || '未知'}
                 </Text>
               </View>
-              {item.participants?.length > 0 && (
-                <Text className='participants'>
-                  签署方：{item.participants.map((p: any) => p.name || p.mobile).join('、')}
-                </Text>
-              )}
-              <Text className='create-time'>{item.create_time || ''}</Text>
+
+              <View className='card-body'>
+                {item.participants?.length > 0 && (
+                  <View className='info-row'>
+                    <Text className='row-icon'>👤</Text>
+                    <Text className='label'>签署方</Text>
+                    <Text className='value'>
+                      {item.participants.map((p: any) => p.name || p.mobile).join('、')}
+                    </Text>
+                  </View>
+                )}
+                <View className='info-row'>
+                  <Text className='row-icon'>🕐</Text>
+                  <Text className='label'>创建时间</Text>
+                  <Text className='value'>{item.create_time || '-'}</Text>
+                </View>
+              </View>
             </View>
           ))
         )}
 
         {hasMore && (
           <View className='load-more' onClick={loadMore}>
-            <Text>{loading ? '加载中...' : '加载更多'}</Text>
+            <Text>{loading ? '正在加载...' : '点击加载更多'}</Text>
           </View>
         )}
       </View>

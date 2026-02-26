@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import Taro, { useRouter } from '@tarojs/taro'
 import { View, Text } from '@tarojs/components'
-import { Button, Cell } from '@nutui/nutui-react-taro'
 import { useRequireAuth } from '@/hooks/useAuth'
 import {
   getContractDetail,
@@ -14,13 +13,13 @@ import {
 } from '@/api/contracts'
 import './index.scss'
 
-const STATUS_MAP: Record<number, { text: string; color: string }> = {
-  1: { text: '草稿', color: '#999' },
-  2: { text: '签署中', color: '#fa8c16' },
-  3: { text: '已完成', color: '#00C28A' },
-  4: { text: '已取消', color: '#ff4d4f' },
-  5: { text: '已拒签', color: '#ff4d4f' },
-  6: { text: '已过期', color: '#999' },
+const STATUS_MAP: Record<number, { text: string; type: string }> = {
+  1: { text: '草稿', type: 'default' },
+  2: { text: '签署中', type: 'warning' },
+  3: { text: '已完成', type: 'success' },
+  4: { text: '已取消', type: 'danger' },
+  5: { text: '已拒签', type: 'danger' },
+  6: { text: '已过期', type: 'default' },
 }
 
 const ACTION_LABEL: Record<string, string> = {
@@ -59,6 +58,10 @@ export default function ContractDetailPage() {
   }
 
   const fetchEvidence = async () => {
+    if (showEvidence) {
+      setShowEvidence(false)
+      return
+    }
     try {
       const data = await getEvidence(contractId)
       setEvidenceList(data || [])
@@ -133,90 +136,139 @@ export default function ContractDetailPage() {
   }
 
   if (!detail) {
-    return <View className='contract-detail'><Text>加载中...</Text></View>
+    return (
+      <View className='contract-detail loading-state'>
+        <Text>数据加载中...</Text>
+      </View>
+    )
   }
 
-  const status = STATUS_MAP[detail.status] || { text: '未知', color: '#999' }
+  const status = STATUS_MAP[detail.status] || { text: '未知', type: 'default' }
 
   return (
     <View className='contract-detail'>
-      {/* 合同基本信息 */}
-      <View className='detail-header'>
-        <Text className='detail-name'>{detail.name}</Text>
-        <Text className='detail-status' style={{ color: status.color }}>{status.text}</Text>
+      {/* 顶部状态卡片 */}
+      <View className='status-header-card'>
+        <View className='header-top'>
+          <Text className='contract-name'>{detail.name}</Text>
+          <Text className={`status-tag status-tag-${status.type} tag-large`}>{status.text}</Text>
+        </View>
+        <View className='header-info'>
+          <Text className='info-label'>合同编号：</Text>
+          <Text className='info-value'>{detail.id}</Text>
+        </View>
       </View>
 
-      <View className='info-section'>
-        <Cell title='创建时间' extra={detail.create_time || '-'} />
-        {detail.complete_time && <Cell title='完成时间' extra={detail.complete_time} />}
-        {detail.remark && <Cell title='备注' extra={detail.remark} />}
-        {detail.file_hash && <Cell title='文档哈希' extra={detail.file_hash.slice(0, 16) + '...'} />}
-      </View>
-
-      {/* 签署方 */}
-      {detail.participants?.length > 0 && (
-        <View className='participants-section'>
-          <Text className='section-title'>签署方</Text>
-          {detail.participants.map((p: any, index: number) => (
-            <View key={p.id || index} className='participant-item'>
-              <View className='p-info'>
-                <Text className='p-name'>{p.name || '未指定'}</Text>
-                <Text className='p-mobile'>{p.mobile}</Text>
-              </View>
-              <Text className='p-status'>
-                {p.status === 0 ? '待签署' : p.status === 2 ? '已签署' : '已拒签'}
-              </Text>
+      <View className='detail-container'>
+        <View className='info-group'>
+          <Text className='group-title'>基本信息</Text>
+          <View className='cell-row'>
+            <Text className='cell-title'>创建时间</Text>
+            <Text className='cell-extra'>{detail.create_time || '-'}</Text>
+          </View>
+          {detail.complete_time && (
+            <View className='cell-row'>
+              <Text className='cell-title'>完成时间</Text>
+              <Text className='cell-extra'>{detail.complete_time}</Text>
             </View>
-          ))}
+          )}
+          {detail.remark && (
+            <View className='cell-row'>
+              <Text className='cell-title'>备注</Text>
+              <Text className='cell-extra'>{detail.remark}</Text>
+            </View>
+          )}
+          {detail.file_hash && (
+            <View className='cell-row'>
+              <Text className='cell-title'>文档哈希</Text>
+              <Text className='cell-extra hash-text'>{detail.file_hash.slice(0, 16) + '...'}</Text>
+            </View>
+          )}
         </View>
-      )}
 
-      {/* 证据链 */}
-      <View className='evidence-section'>
-        <View className='evidence-header' onClick={fetchEvidence}>
-          <Text className='section-title'>证据链</Text>
-          <Text className='toggle-btn'>{showEvidence ? '收起' : '展开'}</Text>
-        </View>
-        {showEvidence && (
-          <View className='evidence-timeline'>
-            {evidenceList.length === 0 ? (
-              <Text className='no-evidence'>暂无记录</Text>
-            ) : (
-              evidenceList.map((log: any) => (
-                <View key={log.id} className='timeline-item'>
-                  <View className='timeline-dot' />
-                  <View className='timeline-content'>
-                    <Text className='timeline-action'>{ACTION_LABEL[log.action] || log.action}</Text>
-                    <Text className='timeline-time'>{log.create_time}</Text>
-                    {log.ip && <Text className='timeline-ip'>IP: {log.ip}</Text>}
-                  </View>
+        {/* 签署方 */}
+        {detail.participants?.length > 0 && (
+          <View className='info-group'>
+            <Text className='group-title'>签署各方</Text>
+            {detail.participants.map((p: any, index: number) => (
+              <View key={p.id || index} className='participant-card'>
+                <View className='p-main'>
+                  <Text className='p-name'>{p.name || '未指定'}</Text>
+                  <Text className='p-mobile'>{p.mobile}</Text>
                 </View>
-              ))
-            )}
+                <Text className={`status-tag status-tag-${p.status === 2 ? 'success' : p.status === 1 ? 'danger' : 'warning'}`}>
+                  {p.status === 0 ? '待签署' : p.status === 2 ? '已签署' : '已拒签'}
+                </Text>
+              </View>
+            ))}
           </View>
         )}
+
+        {/* 证据链 */}
+        <View className='info-group'>
+          <View className='group-header' onClick={fetchEvidence}>
+            <Text className='group-title'>签署证据链</Text>
+            <Text className='toggle-arrow'>{showEvidence ? '▲' : '▼'}</Text>
+          </View>
+          {showEvidence && (
+            <View className='evidence-timeline'>
+              {evidenceList.length === 0 ? (
+                <Text className='no-data'>暂无存证记录</Text>
+              ) : (
+                evidenceList.map((log: any) => (
+                  <View key={log.id} className='timeline-item'>
+                    <View className='timeline-dot' />
+                    <View className='timeline-content'>
+                      <Text className='action'>{ACTION_LABEL[log.action] || log.action}</Text>
+                      <Text className='time'>{log.create_time}</Text>
+                      {log.ip && <Text className='ip'>IP: {log.ip}</Text>}
+                    </View>
+                  </View>
+                ))
+              )}
+            </View>
+          )}
+        </View>
       </View>
 
-      {/* 操作按钮 */}
-      <View className='action-section'>
-        {detail.status === 1 && (
-          <Button type='primary' block onClick={handleInitiate}>发起签署</Button>
-        )}
-        {detail.status === 2 && (
-          <Button type='primary' block onClick={handleSign}>去签署</Button>
-        )}
-        {detail.status === 2 && (
-          <Button block onClick={handleUrge}>催签</Button>
-        )}
-        {detail.status === 3 && (
-          <Button type='primary' block onClick={handleDownload}>下载合同</Button>
-        )}
-        {detail.status <= 2 && (
-          <Button block onClick={handleCancel} className='cancel-btn'>取消合同</Button>
-        )}
-        {(detail.status === 1 || detail.status === 4) && (
-          <Button block onClick={handleDelete} className='delete-btn'>删除合同</Button>
-        )}
+      {/* 悬浮操作栏 */}
+      <View className='action-bar-placeholder' />
+      <View className='action-bar'>
+        <View className='btn-group'>
+          {detail.status === 1 && (
+            <View className='btn btn-primary btn-block' onClick={handleInitiate}>
+              <Text>发起签署</Text>
+            </View>
+          )}
+          {detail.status === 2 && (
+            <View className='btn btn-primary btn-block' onClick={handleSign}>
+              <Text>立即签署</Text>
+            </View>
+          )}
+          {detail.status === 3 && (
+            <View className='btn btn-success btn-block' onClick={handleDownload}>
+              <Text>下载签署件</Text>
+            </View>
+          )}
+
+          <View className='secondary-btns'>
+            {detail.status === 2 && (
+              <View className='btn btn-default btn-small sec-btn' onClick={handleUrge}>
+                <Text>催签</Text>
+              </View>
+            )}
+            {detail.status <= 2 && (
+              <View className='btn btn-small sec-btn cancel-btn' onClick={handleCancel}>
+                <Text>取消</Text>
+              </View>
+            )}
+            {(detail.status === 1 || detail.status === 4) && (
+              <View className='btn btn-small sec-btn delete-btn' onClick={handleDelete}>
+                <Text>删除</Text>
+              </View>
+            )}
+          </View>
+        </View>
       </View>
     </View>
   )

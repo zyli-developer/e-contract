@@ -1,18 +1,17 @@
 version: '3.8'
 
 services:
-  mysql:
-    image: mysql:8.0
+  postgres:
+    image: postgres:15-alpine
     environment:
-      MYSQL_ROOT_PASSWORD: password
-      MYSQL_DATABASE: mini_contract
-      MYSQL_CHARSET: utf8mb4
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mini_contract
     ports:
-      - "3306:3306"
+      - "5432:5432"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -32,12 +31,12 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: mysql+aiomysql://root:password@mysql:3306/mini_contract
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/mini_contract
       REDIS_URL: redis://redis:6379/0
       DEBUG: "true"
       JWT_SECRET: dev-secret-change-in-production
     depends_on:
-      mysql:
+      postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -52,4 +51,4 @@ services:
       - api
 
 volumes:
-  mysql_data:
+  postgres_data:
