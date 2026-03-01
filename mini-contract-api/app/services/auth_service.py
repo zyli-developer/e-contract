@@ -21,7 +21,6 @@ from app.core.security import (
 from app.models.member import Member
 from app.models.member_token import MemberToken
 from app.schemas.auth import AuthTokenResponse
-from app.utils.redis_client import delete_sms_code, get_sms_code
 
 
 async def _create_token_record(db: AsyncSession, member_id: int) -> AuthTokenResponse:
@@ -51,23 +50,6 @@ async def _create_token_record(db: AsyncSession, member_id: int) -> AuthTokenRes
     )
 
 
-async def _get_or_create_member_by_mobile(db: AsyncSession, mobile: str) -> Member:
-    """根据手机号获取或创建用户（登录即注册）"""
-    result = await db.execute(select(Member).where(Member.mobile == mobile))
-    member = result.scalar_one_or_none()
-    if member:
-        if member.status == 0:
-            raise BusinessException(code=1012001003, msg="账号已被禁用")
-        return member
-
-    # 自动注册
-    member = Member(mobile=mobile, nickname=f"用户{mobile[-4:]}")
-    db.add(member)
-    await db.flush()
-    await db.refresh(member)
-    return member
-
-
 async def login_by_password(db: AsyncSession, mobile: str, password: str) -> AuthTokenResponse:
     """密码登录"""
     result = await db.execute(select(Member).where(Member.mobile == mobile))
@@ -78,24 +60,35 @@ async def login_by_password(db: AsyncSession, mobile: str, password: str) -> Aut
     if member.status == 0:
         raise BusinessException(code=1012001003, msg="账号已被禁用")
     if not member.password:
-        raise ValidationException("该账号未设置密码，请使用短信验证码登录")
+        raise ValidationException("该账号未设置密码")
     if not verify_password(password, member.password):
         raise ValidationException("密码错误")
 
     return await _create_token_record(db, member.id)
 
 
-async def login_by_sms(db: AsyncSession, mobile: str, code: str) -> AuthTokenResponse:
-    """短信验证码登录（登录即注册）"""
-    # 验证短信验证码
-    stored_code = await get_sms_code(mobile, scene=1)
-    if not stored_code or stored_code != code:
-        raise BusinessException(code=ErrorCode.SMS_CODE_INVALID, msg="验证码错误或已过期")
+async def register(db: AsyncSession, mobile: str, password: str, nickname: str | None = None) -> AuthTokenResponse:
+    """用户注册"""
+    if len(mobile) != 11:
+        raise ValidationException("手机号格式不正确")
+    if len(password) < 6:
+        raise ValidationException("密码长度不能少于 6 位")
 
-    # 删除已使用的验证码
-    await delete_sms_code(mobile, scene=1)
+    # 检查手机号是否已注册
+    result = await db.execute(select(Member).where(Member.mobile == mobile))
+    existing = result.scalar_one_or_none()
+    if existing:
+        raise BusinessException(code=ErrorCode.MOBILE_ALREADY_EXISTS, msg="该手机号已注册")
 
-    member = await _get_or_create_member_by_mobile(db, mobile)
+    member = Member(
+        mobile=mobile,
+        password=hash_password(password),
+        nickname=nickname or f"用户{mobile[-4:]}",
+    )
+    db.add(member)
+    await db.flush()
+    await db.refresh(member)
+
     return await _create_token_record(db, member.id)
 
 

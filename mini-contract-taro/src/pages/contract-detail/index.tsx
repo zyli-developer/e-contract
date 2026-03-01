@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import Taro, { useRouter } from '@tarojs/taro'
-import { View, Text } from '@tarojs/components'
+import { View, Text, RichText, ScrollView, Image } from '@tarojs/components'
 import { useRequireAuth } from '@/hooks/useAuth'
 import {
   getContractDetail,
@@ -11,6 +11,7 @@ import {
   urgeSign,
   downloadContract,
 } from '@/api/contracts'
+import { getTemplateDetail } from '@/api/templates'
 import './index.scss'
 
 const STATUS_MAP: Record<number, { text: string; type: string }> = {
@@ -26,8 +27,6 @@ const ACTION_LABEL: Record<string, string> = {
   CONTRACT_CREATED: '合同创建',
   CONTRACT_SENT: '发起签署',
   SIGNER_VIEWED: '查看合同',
-  SIGN_CODE_SENT: '发送验证码',
-  SIGN_CODE_VERIFIED: '验证码验证通过',
   CONTRACT_SIGNED: '签署完成',
   CONTRACT_COMPLETED: '合同完成',
   CONTRACT_CANCELLED: '合同取消',
@@ -41,6 +40,8 @@ export default function ContractDetailPage() {
   const [detail, setDetail] = useState<any>(null)
   const [evidenceList, setEvidenceList] = useState<any[]>([])
   const [showEvidence, setShowEvidence] = useState(false)
+  const [showPreview, setShowPreview] = useState(false)
+  const [contractHtml, setContractHtml] = useState<string>('')
 
   useEffect(() => {
     if (contractId) {
@@ -68,6 +69,46 @@ export default function ContractDetailPage() {
       setShowEvidence(true)
     } catch (e: any) {
       Taro.showToast({ title: e.message || '获取证据链失败', icon: 'none' })
+    }
+  }
+
+  const buildSignatureHtml = (party: 'A' | 'B') => {
+    const participants = detail?.participants || []
+    // 甲方=order_num 1, 乙方=order_num 2
+    const orderNum = party === 'A' ? 1 : 2
+    const p = participants.find((item: any) => item.order_num === orderNum)
+    if (!p) return '<p style="color:#ccc">（未指定签署方）</p>'
+    if (p.status === 2 && p.seal_data) {
+      return `<div><img src="${p.seal_data}" style="max-width:150px;max-height:80px;" /></div>`
+    }
+    if (p.status === 2) {
+      return `<p>${p.name || ''}（已签署）</p>`
+    }
+    return '<p style="color:#ccc">（待签署）</p>'
+  }
+
+  const handlePreview = async () => {
+    if (showPreview) {
+      setShowPreview(false)
+      return
+    }
+    if (!detail?.template_id) return
+    try {
+      const tpl = await getTemplateDetail(detail.template_id)
+      if (tpl?.content) {
+        let html = tpl.content as string
+        const vars = detail.variables || {}
+        // 统一替换所有占位符（签章 + 普通变量）
+        html = html.replace(/\{\{(\w+)\}\}/g, (_match: string, varName: string) => {
+          if (varName === 'partyASignature') return buildSignatureHtml('A')
+          if (varName === 'partyBSignature') return buildSignatureHtml('B')
+          return vars[varName] || '<span style="color:#ccc">未填写</span>'
+        })
+        setContractHtml(html)
+      }
+      setShowPreview(true)
+    } catch (e: any) {
+      Taro.showToast({ title: e.message || '加载合同内容失败', icon: 'none' })
     }
   }
 
@@ -121,12 +162,19 @@ export default function ContractDetailPage() {
   }
 
   const handleDownload = async () => {
+    // 模板合同没有实际文件，使用预览方式查看完整合同
+    if (detail?.template_id) {
+      handlePreview()
+      return
+    }
     try {
       const data = await downloadContract(contractId)
       const fileUrl = data?.signed_file_url || data?.file_url
       if (fileUrl) {
-        await Taro.downloadFile({ url: fileUrl })
-        Taro.showToast({ title: '下载成功', icon: 'success' })
+        const downloadRes = await Taro.downloadFile({ url: fileUrl })
+        if (downloadRes.statusCode === 200) {
+          await Taro.openDocument({ filePath: downloadRes.tempFilePath })
+        }
       } else {
         Taro.showToast({ title: '暂无可下载文件', icon: 'none' })
       }
@@ -184,6 +232,12 @@ export default function ContractDetailPage() {
               <Text className='cell-extra hash-text'>{detail.file_hash.slice(0, 16) + '...'}</Text>
             </View>
           )}
+          {detail.template_id && (
+            <View className='cell-row clickable' onClick={handlePreview}>
+              <Text className='cell-title'>合同内容</Text>
+              <Text className='cell-link'>预览合同 &gt;</Text>
+            </View>
+          )}
         </View>
 
         {/* 签署方 */}
@@ -231,6 +285,46 @@ export default function ContractDetailPage() {
         </View>
       </View>
 
+      {/* 合同内容预览弹层 */}
+      {showPreview && (
+        <View className='preview-overlay'>
+          <View className='preview-panel'>
+            <View className='preview-header'>
+              <Text className='preview-title'>合同内容预览</Text>
+              <Text className='preview-close' onClick={() => setShowPreview(false)}>关闭</Text>
+            </View>
+            <ScrollView scrollY className='preview-scroll'>
+              <View className='preview-body'>
+                <RichText nodes={contractHtml} />
+
+                {/* 签署方信息 */}
+                {detail.participants?.length > 0 && (
+                  <View className='preview-signers'>
+                    <Text className='preview-signers-title'>签署信息</Text>
+                    {detail.participants.map((p: any, index: number) => (
+                      <View key={p.id || index} className='preview-signer-item'>
+                        <View className='preview-signer-info'>
+                          <Text className='preview-signer-name'>{p.name || '未指定'}</Text>
+                          <Text className={`preview-signer-status ${p.status === 2 ? 'signed' : ''}`}>
+                            {p.status === 0 ? '待签署' : p.status === 2 ? '已签署' : '已拒签'}
+                          </Text>
+                        </View>
+                        {p.sign_time && (
+                          <Text className='preview-signer-time'>签署时间：{p.sign_time}</Text>
+                        )}
+                        {p.seal_data && (
+                          <Image className='preview-seal-img' src={p.seal_data} mode='aspectFit' />
+                        )}
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      )}
+
       {/* 悬浮操作栏 */}
       <View className='action-bar-placeholder' />
       <View className='action-bar'>
@@ -247,7 +341,7 @@ export default function ContractDetailPage() {
           )}
           {detail.status === 3 && (
             <View className='btn btn-success btn-block' onClick={handleDownload}>
-              <Text>下载签署件</Text>
+              <Text>{detail.template_id ? '查看签署件' : '下载签署件'}</Text>
             </View>
           )}
 

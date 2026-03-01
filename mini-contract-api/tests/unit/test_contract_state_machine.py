@@ -4,7 +4,6 @@ import pytest
 from app.schemas.contract import (
     ParticipantRequest,
     ParticipantResponse,
-    SignCodeVerifyRequest,
     SignRequest,
     RejectRequest,
     SignTaskCreateRequest,
@@ -56,12 +55,6 @@ def test_sign_task_response_all_fields():
     assert resp.file_hash == "abc123"
     assert resp.signed_file_hash == "def456"
     assert resp.complete_time == "2024-01-02T00:00:00"
-
-
-def test_sign_code_verify_request():
-    """签署验证码验证请求"""
-    req = SignCodeVerifyRequest(code="123456")
-    assert req.code == "123456"
 
 
 def test_sign_request_default():

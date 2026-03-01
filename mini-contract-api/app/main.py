@@ -17,8 +17,10 @@ from app.core.middleware import RequestLoggingMiddleware
 async def lifespan(app: FastAPI):
     # 启动时：自动建表
     from app.database import engine, init_db, seed_admin
+    from app.seed_templates import seed_templates
     await init_db()
     await seed_admin()
+    await seed_templates()
     yield
     # 关闭时：释放连接池
     from app.utils.redis_client import close_redis

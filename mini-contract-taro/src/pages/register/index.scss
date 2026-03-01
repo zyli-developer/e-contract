@@ -1,0 +1,9 @@
+/* Styles that Tailwind can't express inline */
+.register-page {
+  background: linear-gradient(160deg, #00C28A 0%, #00a876 30%, #f7f8fa 30.1%, #f7f8fa 100%);
+}
+
+.submit-btn {
+  background: linear-gradient(135deg, #00C28A, #00a876);
+  box-shadow: 0 8px 24px rgba(0, 194, 138, 0.25);
+}

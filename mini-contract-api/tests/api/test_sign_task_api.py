@@ -1,6 +1,5 @@
 """合同签署 API 端点测试"""
 import pytest
-from unittest.mock import patch, AsyncMock
 
 from httpx import ASGITransport, AsyncClient
 
@@ -61,22 +60,21 @@ async def test_initiate_requires_auth(client):
 
 
 @pytest.mark.anyio
-async def test_send_sign_code_requires_auth(client):
-    """发送签署验证码需要认证"""
+async def test_send_sign_code_endpoint_removed(client):
+    """发送签署验证码端点应不存在"""
     resp = await client.post("/app-api/seal/sign-task/1/send-sign-code")
-    data = resp.json()
-    assert data["code"] in (401, 1012005005, 1012005006)
+    # 不再有此端点，应返回 404 或 405
+    assert resp.status_code in (404, 405) or resp.json().get("detail") == "Not Found"
 
 
 @pytest.mark.anyio
-async def test_verify_sign_code_requires_auth(client):
-    """验证签署验证码需要认证"""
+async def test_verify_sign_code_endpoint_removed(client):
+    """验证签署验证码端点应不存在"""
     resp = await client.post(
         "/app-api/seal/sign-task/1/verify-sign-code",
         json={"code": "123456"},
     )
-    data = resp.json()
-    assert data["code"] in (401, 1012005005, 1012005006)
+    assert resp.status_code in (404, 405) or resp.json().get("detail") == "Not Found"
 
 
 @pytest.mark.anyio

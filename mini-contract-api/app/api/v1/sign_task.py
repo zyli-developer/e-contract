@@ -6,7 +6,6 @@ from app.database import get_db
 from app.dependencies import get_current_user_id
 from app.schemas.contract import (
     RejectRequest,
-    SignCodeVerifyRequest,
     SignRequest,
     SignTaskCreateRequest,
 )
@@ -90,6 +89,7 @@ async def create_task(
         template_id=req.template_id,
         file_url=req.file_url,
         remark=req.remark,
+        variables=req.variables,
         participants=req.participants,
         ip=_client_ip(request),
         device=_client_device(request),
@@ -142,39 +142,6 @@ async def initiate_signing(
     return ApiResponse.success(data=result)
 
 
-@router.post("/{task_id}/send-sign-code")
-async def send_sign_code(
-    task_id: int,
-    request: Request,
-    user_id: int = Depends(get_current_user_id),
-    db: AsyncSession = Depends(get_db),
-):
-    """发送签署验证码"""
-    await sign_task_service.send_sign_code(
-        db, task_id, user_id,
-        ip=_client_ip(request),
-        device=_client_device(request),
-    )
-    return ApiResponse.success(msg="验证码已发送")
-
-
-@router.post("/{task_id}/verify-sign-code")
-async def verify_sign_code(
-    task_id: int,
-    req: SignCodeVerifyRequest,
-    request: Request,
-    user_id: int = Depends(get_current_user_id),
-    db: AsyncSession = Depends(get_db),
-):
-    """验证签署验证码"""
-    await sign_task_service.verify_sign_code(
-        db, task_id, user_id, req.code,
-        ip=_client_ip(request),
-        device=_client_device(request),
-    )
-    return ApiResponse.success(msg="验证通过")
-
-
 @router.post("/{task_id}/sign")
 async def execute_sign(
     task_id: int,
@@ -187,6 +154,7 @@ async def execute_sign(
     result = await sign_task_service.execute_sign(
         db, task_id, user_id,
         seal_id=req.seal_id,
+        variables=req.variables,
         ip=_client_ip(request),
         device=_client_device(request),
     )

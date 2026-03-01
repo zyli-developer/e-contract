@@ -4,7 +4,7 @@ import logging
 from datetime import datetime
 from typing import List, Optional
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import BusinessException, ForbiddenException, ValidationException
@@ -19,26 +19,19 @@ from app.schemas.contract import (
 )
 from app.services.evidence_service import EvidenceAction, log_evidence
 from app.utils.pagination import paginate
-from app.utils.redis_client import (
-    check_sms_rate_limit,
-    delete_sms_code,
-    get_sms_code,
-    set_sms_code,
-)
 
 logger = logging.getLogger(__name__)
 
-# 签署验证码 SMS scene
-SIGN_CODE_SCENE = 10
 
-
-def _participant_response(p: SignTaskParticipant) -> dict:
+def _participant_response(p: SignTaskParticipant, seal_data: str | None = None) -> dict:
     return ParticipantResponse(
         id=p.id,
         name=p.name,
         mobile=p.mobile,
         status=p.status,
         order_num=p.order_num,
+        sign_time=p.sign_time.isoformat() if p.sign_time else None,
+        seal_data=seal_data,
     ).model_dump()
 
 
@@ -54,6 +47,7 @@ def _task_response(task: SignTask, participants: list) -> dict:
         template_id=task.template_id,
         creator_id=task.creator_id,
         remark=task.remark,
+        variables=task.variables,
         create_time=task.create_time.isoformat() if task.create_time else None,
         complete_time=task.complete_time.isoformat() if task.complete_time else None,
         participants=participants,
@@ -70,13 +64,30 @@ async def _get_task(db: AsyncSession, task_id: int) -> SignTask:
 
 
 async def _get_participants(db: AsyncSession, task_id: int) -> list:
-    """获取签署方列表"""
+    """获取签署方列表（含签名图片）"""
+    from app.models.seal_info import SealInfo
+
     p_result = await db.execute(
         select(SignTaskParticipant)
         .where(SignTaskParticipant.task_id == task_id)
         .order_by(SignTaskParticipant.order_num)
     )
-    return [_participant_response(p) for p in p_result.scalars().all()]
+    participants = p_result.scalars().all()
+
+    # 批量查询签名图片
+    seal_ids = [p.seal_id for p in participants if p.seal_id]
+    seal_map: dict[int, str] = {}
+    if seal_ids:
+        seal_result = await db.execute(
+            select(SealInfo.id, SealInfo.seal_data).where(SealInfo.id.in_(seal_ids))
+        )
+        for row in seal_result.all():
+            seal_map[row[0]] = row[1]
+
+    return [
+        _participant_response(p, seal_map.get(p.seal_id) if p.seal_id else None)
+        for p in participants
+    ]
 
 
 # ==============================
@@ -90,6 +101,7 @@ async def create_sign_task(
     template_id: int | None = None,
     file_url: str | None = None,
     remark: str | None = None,
+    variables: dict | None = None,
     participants: List[ParticipantRequest] | None = None,
     ip: str | None = None,
     device: str | None = None,
@@ -113,6 +125,7 @@ async def create_sign_task(
         file_hash=file_hash,
         creator_id=creator_id,
         remark=remark,
+        variables=variables,
     )
     db.add(task)
     await db.flush()
@@ -153,9 +166,47 @@ async def create_sign_task(
     return _task_response(task, participant_list)
 
 
+async def _visible_task_ids(db: AsyncSession, user_id: int) -> set[int]:
+    """获取用户可见的合同 ID 集合（创建的 + 作为签署方的）"""
+    from app.models.member import Member
+
+    # 通过 member_id 直接关联
+    p_by_id = await db.execute(
+        select(SignTaskParticipant.task_id).where(SignTaskParticipant.member_id == user_id)
+    )
+    task_ids = set(p_by_id.scalars().all())
+
+    # 通过手机号关联
+    member_result = await db.execute(select(Member).where(Member.id == user_id))
+    member = member_result.scalar_one_or_none()
+    if member and member.mobile:
+        p_by_mobile = await db.execute(
+            select(SignTaskParticipant.task_id).where(SignTaskParticipant.mobile == member.mobile)
+        )
+        task_ids.update(p_by_mobile.scalars().all())
+
+    return task_ids
+
+
+def _user_visible_filter(user_id: int, participant_task_ids: set[int]):
+    """构造用户可见合同的 WHERE 条件（签署方只能看到非草稿合同）"""
+    from sqlalchemy import and_
+    if participant_task_ids:
+        return or_(
+            SignTask.creator_id == user_id,
+            and_(
+                SignTask.id.in_(participant_task_ids),
+                SignTask.status != 1,  # 签署方不可见草稿
+            ),
+        )
+    return SignTask.creator_id == user_id
+
+
 async def get_statistics(db: AsyncSession, creator_id: int) -> dict:
     """获取合同统计"""
-    base = select(func.count()).select_from(SignTask).where(SignTask.creator_id == creator_id)
+    p_task_ids = await _visible_task_ids(db, creator_id)
+    visible = _user_visible_filter(creator_id, p_task_ids)
+    base = select(func.count()).select_from(SignTask).where(visible)
 
     total = (await db.execute(base)).scalar() or 0
     draft = (await db.execute(base.where(SignTask.status == 1))).scalar() or 0
@@ -178,7 +229,9 @@ async def list_tasks(
     page_size: int = 10,
 ) -> PageResult:
     """合同列表（分页）"""
-    query = select(SignTask).where(SignTask.creator_id == creator_id)
+    p_task_ids = await _visible_task_ids(db, creator_id)
+    visible = _user_visible_filter(creator_id, p_task_ids)
+    query = select(SignTask).where(visible)
     if status is not None:
         query = query.where(SignTask.status == status)
     query = query.order_by(SignTask.create_time.desc())
@@ -320,91 +373,10 @@ async def initiate_signing(
     return _task_response(task, participants)
 
 
-async def send_sign_code(
-    db: AsyncSession, task_id: int, user_id: int,
-    ip: str | None = None, device: str | None = None,
-) -> None:
-    """发送签署验证码到签署方手机"""
-    task = await _get_task(db, task_id)
-    if task.status != 2:
-        raise BusinessException(code=400, msg="合同不在签署中状态")
-
-    # 找到当前用户对应的签署方
-    participant = await _find_participant_by_user(db, task_id, user_id)
-    if not participant:
-        raise ForbiddenException("您不是此合同的签署方")
-    if participant.status == 2:
-        raise BusinessException(code=400, msg="您已签署此合同")
-
-    # 频率限制
-    can_send = await check_sms_rate_limit(participant.mobile, SIGN_CODE_SCENE)
-    if not can_send:
-        raise BusinessException(code=1012002003, msg="发送太频繁，请 60 秒后重试")
-
-    # 生成并存储验证码
-    import random
-    code = "".join(str(random.randint(0, 9)) for _ in range(6))
-    await set_sms_code(participant.mobile, SIGN_CODE_SCENE, code)
-
-    # MVP：日志输出
-    from app.config import settings
-    if settings.DEBUG or not settings.SMS_ACCESS_KEY:
-        logger.info(f"[SMS Mock] 签署验证码 mobile={participant.mobile}, code={code}")
-    else:
-        logger.info(f"[SMS] 发送签署验证码到 {participant.mobile}")
-
-    # 记录证据
-    await log_evidence(
-        db,
-        task_id=task_id,
-        action=EvidenceAction.SIGN_CODE_SENT,
-        user_id=user_id,
-        ip=ip,
-        device=device,
-        detail={"mobile": participant.mobile[:3] + "****" + participant.mobile[-4:]},
-    )
-
-
-async def verify_sign_code(
-    db: AsyncSession, task_id: int, user_id: int, code: str,
-    ip: str | None = None, device: str | None = None,
-) -> bool:
-    """验证签署验证码"""
-    task = await _get_task(db, task_id)
-    if task.status != 2:
-        raise BusinessException(code=400, msg="合同不在签署中状态")
-
-    participant = await _find_participant_by_user(db, task_id, user_id)
-    if not participant:
-        raise ForbiddenException("您不是此合同的签署方")
-
-    # 校验验证码
-    stored_code = await get_sms_code(participant.mobile, SIGN_CODE_SCENE)
-    if not stored_code:
-        raise BusinessException(code=1012002002, msg="验证码已过期，请重新发送")
-    if stored_code != code:
-        raise BusinessException(code=1012002001, msg="验证码错误")
-
-    # 验证通过，删除验证码
-    await delete_sms_code(participant.mobile, SIGN_CODE_SCENE)
-
-    # 记录证据
-    await log_evidence(
-        db,
-        task_id=task_id,
-        action=EvidenceAction.SIGN_CODE_VERIFIED,
-        user_id=user_id,
-        ip=ip,
-        device=device,
-        detail={"mobile": participant.mobile[:3] + "****" + participant.mobile[-4:]},
-    )
-
-    return True
-
-
 async def execute_sign(
     db: AsyncSession, task_id: int, user_id: int,
     seal_id: Optional[int] = None,
+    variables: dict | None = None,
     ip: str | None = None, device: str | None = None,
 ) -> dict:
     """执行签署操作"""
@@ -440,6 +412,12 @@ async def execute_sign(
         raise BusinessException(code=400, msg="您已签署此合同")
     if participant.status == 3:
         raise BusinessException(code=400, msg="您已拒签此合同")
+
+    # 合并签署方提交的变量（如乙方身份证等）
+    if variables:
+        existing_vars = task.variables or {}
+        existing_vars.update(variables)
+        task.variables = existing_vars
 
     # 更新签署方状态
     participant.status = 2  # 已签署

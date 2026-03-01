@@ -117,15 +117,13 @@ async def test_update_none_values_no_change():
 
 @pytest.mark.anyio
 async def test_update_password_success():
-    """修改密码成功"""
+    """修改密码成功（确认密码一致）"""
     member = _make_member(mobile="13800138000")
     db = _make_db(scalar_return=member)
 
-    with patch("app.services.member_service.get_sms_code", new_callable=AsyncMock, return_value="666666"), \
-         patch("app.services.member_service.delete_sms_code", new_callable=AsyncMock):
-        await update_password(db, user_id=1, new_password="newpwd123", code="666666")
-        assert member.password is not None
-        assert member.password != "newpwd123"  # should be hashed
+    await update_password(db, user_id=1, new_password="newpwd123", confirm_password="newpwd123")
+    assert member.password is not None
+    assert member.password != "newpwd123"  # should be hashed
 
 
 @pytest.mark.anyio
@@ -133,32 +131,19 @@ async def test_update_password_user_not_found():
     """用户不存在"""
     db = _make_db(scalar_return=None)
     with pytest.raises(BusinessException) as exc_info:
-        await update_password(db, user_id=999, new_password="newpwd", code="123456")
+        await update_password(db, user_id=999, new_password="newpwd", confirm_password="newpwd")
     assert exc_info.value.code == 1012001001
 
 
 @pytest.mark.anyio
-async def test_update_password_wrong_code():
-    """验证码错误"""
+async def test_update_password_mismatch():
+    """两次密码不一致"""
     member = _make_member()
     db = _make_db(scalar_return=member)
 
-    with patch("app.services.member_service.get_sms_code", new_callable=AsyncMock, return_value="123456"):
-        with pytest.raises(BusinessException) as exc_info:
-            await update_password(db, user_id=1, new_password="newpwd", code="000000")
-        assert "验证码" in exc_info.value.msg
-
-
-@pytest.mark.anyio
-async def test_update_password_expired_code():
-    """验证码已过期"""
-    member = _make_member()
-    db = _make_db(scalar_return=member)
-
-    with patch("app.services.member_service.get_sms_code", new_callable=AsyncMock, return_value=None):
-        with pytest.raises(BusinessException) as exc_info:
-            await update_password(db, user_id=1, new_password="newpwd", code="123456")
-        assert "验证码" in exc_info.value.msg
+    with pytest.raises(ValidationException) as exc_info:
+        await update_password(db, user_id=1, new_password="newpwd123", confirm_password="different")
+    assert "不一致" in exc_info.value.msg
 
 
 @pytest.mark.anyio
@@ -167,8 +152,6 @@ async def test_update_password_too_short():
     member = _make_member()
     db = _make_db(scalar_return=member)
 
-    with patch("app.services.member_service.get_sms_code", new_callable=AsyncMock, return_value="123456"), \
-         patch("app.services.member_service.delete_sms_code", new_callable=AsyncMock):
-        with pytest.raises(ValidationException) as exc_info:
-            await update_password(db, user_id=1, new_password="123", code="123456")
-        assert "6" in exc_info.value.msg
+    with pytest.raises(ValidationException) as exc_info:
+        await update_password(db, user_id=1, new_password="123", confirm_password="123")
+    assert "6" in exc_info.value.msg

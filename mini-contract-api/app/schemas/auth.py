@@ -6,14 +6,10 @@ class LoginRequest(BaseModel):
     password: str
 
 
-class SmsLoginRequest(BaseModel):
+class RegisterRequest(BaseModel):
     mobile: str
-    code: str
-
-
-class SendSmsCodeRequest(BaseModel):
-    mobile: str
-    scene: int  # 1=登录, 2=注册, 3=修改密码
+    password: str
+    nickname: str | None = None
 
 
 class RefreshTokenRequest(BaseModel):
@@ -22,7 +18,7 @@ class RefreshTokenRequest(BaseModel):
 
 class UpdatePasswordRequest(BaseModel):
     password: str
-    code: str
+    confirmPassword: str
 
 
 class AuthTokenResponse(BaseModel):

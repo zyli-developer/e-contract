@@ -2,6 +2,7 @@ export default defineAppConfig({
   pages: [
     'pages/index/index',
     'pages/login/index',
+    'pages/register/index',
     'pages/contract-manage/index',
     'pages/contract-detail/index',
     'pages/contract-sign/index',
@@ -12,6 +13,7 @@ export default defineAppConfig({
     'pages/profile/seals/index',
     'pages/profile/seal-create/index',
     'pages/profile/settings/index',
+    'pages/profile/realname/index',
   ],
   tabBar: {
     color: '#999999',

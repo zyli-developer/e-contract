@@ -75,6 +75,33 @@ async def init_db():
                     "ALTER TABLE member ALTER COLUMN mobile DROP NOT NULL"
                 )
             )
+            # 合同变量值列
+            await conn.execute(
+                sqlalchemy.text(
+                    "ALTER TABLE sign_task ADD COLUMN IF NOT EXISTS variables JSON"
+                )
+            )
+            # 实名认证字段
+            await conn.execute(
+                sqlalchemy.text(
+                    "ALTER TABLE member ADD COLUMN IF NOT EXISTS real_name VARCHAR(50)"
+                )
+            )
+            await conn.execute(
+                sqlalchemy.text(
+                    "ALTER TABLE member ADD COLUMN IF NOT EXISTS id_card VARCHAR(50)"
+                )
+            )
+            await conn.execute(
+                sqlalchemy.text(
+                    "ALTER TABLE member ADD COLUMN IF NOT EXISTS real_name_verified SMALLINT DEFAULT 0"
+                )
+            )
+            await conn.execute(
+                sqlalchemy.text(
+                    "ALTER TABLE member ADD COLUMN IF NOT EXISTS wx_openid VARCHAR(128)"
+                )
+            )
         logger.info("数据库表初始化完成")
     except Exception as e:
         logger.warning("数据库连接失败，跳过自动建表: %s", e)

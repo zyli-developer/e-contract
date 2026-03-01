@@ -6,10 +6,9 @@ from datetime import datetime
 from app.core.exceptions import BusinessException, UnauthorizedException, ValidationException
 from app.services.auth_service import (
     login_by_password,
-    login_by_sms,
+    register,
     refresh_token,
     logout,
-    _get_or_create_member_by_mobile,
 )
 
 
@@ -69,7 +68,7 @@ async def test_login_by_password_user_disabled():
 
 @pytest.mark.anyio
 async def test_login_by_password_no_password_set():
-    """未设置密码应提示用短信登录"""
+    """未设置密码应提示"""
     member = _make_member(password=None)
     db = _make_db(scalar_return=member)
     with pytest.raises(ValidationException) as exc_info:
@@ -88,40 +87,59 @@ async def test_login_by_password_wrong_password():
     assert "密码错误" in exc_info.value.msg
 
 
-# ---- login_by_sms ----
+# ---- register ----
 
 @pytest.mark.anyio
-async def test_login_by_sms_success():
-    """短信登录成功"""
-    member = _make_member()
-    db = _make_db(scalar_return=member)
+async def test_register_success():
+    """注册成功"""
+    db = _make_db(scalar_return=None)
 
-    with patch("app.services.auth_service.get_sms_code", new_callable=AsyncMock, return_value="123456"), \
-         patch("app.services.auth_service.delete_sms_code", new_callable=AsyncMock), \
-         patch("app.services.auth_service._create_token_record", new_callable=AsyncMock) as mock_create:
+    with patch("app.services.auth_service._create_token_record", new_callable=AsyncMock) as mock_create:
         mock_create.return_value = MagicMock()
-        await login_by_sms(db, "13800138000", "123456")
+        await register(db, "13800138000", "test123", "小明")
+        db.add.assert_called_once()
         mock_create.assert_called_once()
 
 
 @pytest.mark.anyio
-async def test_login_by_sms_wrong_code():
-    """短信验证码错误"""
-    with patch("app.services.auth_service.get_sms_code", new_callable=AsyncMock, return_value="123456"):
-        db = AsyncMock()
-        with pytest.raises(BusinessException) as exc_info:
-            await login_by_sms(db, "13800138000", "000000")
-        assert "验证码" in exc_info.value.msg
+async def test_register_mobile_already_exists():
+    """手机号已注册应报错"""
+    member = _make_member()
+    db = _make_db(scalar_return=member)
+    with pytest.raises(BusinessException) as exc_info:
+        await register(db, "13800138000", "test123")
+    assert "已注册" in exc_info.value.msg
 
 
 @pytest.mark.anyio
-async def test_login_by_sms_expired_code():
-    """短信验证码已过期"""
-    with patch("app.services.auth_service.get_sms_code", new_callable=AsyncMock, return_value=None):
-        db = AsyncMock()
-        with pytest.raises(BusinessException) as exc_info:
-            await login_by_sms(db, "13800138000", "123456")
-        assert "验证码" in exc_info.value.msg
+async def test_register_invalid_mobile():
+    """手机号格式不正确应报错"""
+    db = _make_db(scalar_return=None)
+    with pytest.raises(ValidationException) as exc_info:
+        await register(db, "1380013", "test123")
+    assert "手机号" in exc_info.value.msg
+
+
+@pytest.mark.anyio
+async def test_register_password_too_short():
+    """密码太短应报错"""
+    db = _make_db(scalar_return=None)
+    with pytest.raises(ValidationException) as exc_info:
+        await register(db, "13800138000", "123")
+    assert "6" in exc_info.value.msg
+
+
+@pytest.mark.anyio
+async def test_register_default_nickname():
+    """不传昵称时使用默认昵称"""
+    db = _make_db(scalar_return=None)
+
+    with patch("app.services.auth_service._create_token_record", new_callable=AsyncMock) as mock_create:
+        mock_create.return_value = MagicMock()
+        await register(db, "13800138000", "test123")
+        # 检查创建的 member 使用默认昵称
+        added_member = db.add.call_args[0][0]
+        assert added_member.nickname == "用户8000"
 
 
 # ---- refresh_token ----
@@ -165,37 +183,3 @@ async def test_logout_success():
     db = AsyncMock()
     await logout(db, user_id=42)
     db.execute.assert_called_once()
-
-
-# ---- _get_or_create_member_by_mobile ----
-
-@pytest.mark.anyio
-async def test_get_or_create_existing_member():
-    """手机号已存在时直接返回"""
-    member = _make_member()
-    db = _make_db(scalar_return=member)
-    result = await _get_or_create_member_by_mobile(db, "13800138000")
-    assert result.id == 1
-
-
-@pytest.mark.anyio
-async def test_get_or_create_disabled_member():
-    """已禁用的账号应报错"""
-    member = _make_member(status=0)
-    db = _make_db(scalar_return=member)
-    with pytest.raises(BusinessException) as exc_info:
-        await _get_or_create_member_by_mobile(db, "13800138000")
-    assert "禁用" in exc_info.value.msg
-
-
-@pytest.mark.anyio
-async def test_get_or_create_new_member():
-    """手机号不存在时自动注册"""
-    db = AsyncMock()
-    db.add = MagicMock()
-    result = MagicMock()
-    result.scalar_one_or_none.return_value = None
-    db.execute.return_value = result
-
-    await _get_or_create_member_by_mobile(db, "13900139000")
-    db.add.assert_called_once()
