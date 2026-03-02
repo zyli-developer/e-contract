@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import Taro from '@tarojs/taro'
 import { View, Text, ScrollView, Input } from '@tarojs/components'
+import { useRequireLandlord } from '@/hooks/useAuth'
 import { searchTemplates, getCategories, getHotTemplates } from '@/api/templates'
 import './index.scss'
 
@@ -18,6 +19,7 @@ interface Category {
 }
 
 export default function TemplateMarketPage() {
+  useRequireLandlord()
   const [keyword, setKeyword] = useState('')
   const [categories, setCategories] = useState<Category[]>([])
   const [activeCategory, setActiveCategory] = useState('')

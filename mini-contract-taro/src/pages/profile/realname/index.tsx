@@ -189,7 +189,7 @@ export default function RealNamePage() {
     <View className='realname-page'>
       <View className='notice-bar'>
         <Text className='notice-text'>
-          实名认证用于保障电子合同的法律效力，认证后方可签署合同
+          实名认证用于保障租约合同的法律效力，认证后方可签署合同
         </Text>
       </View>
 

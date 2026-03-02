@@ -1,15 +1,13 @@
 import base64
-import logging
 from datetime import datetime, timedelta, timezone
 
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import padding as asym_padding
 from jose import JWTError, jwt
+from loguru import logger
 from passlib.context import CryptContext
 
 from app.config import settings
-
-logger = logging.getLogger(__name__)
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import Taro, { useRouter } from '@tarojs/taro'
 import { View, Text, RichText, ScrollView, Image } from '@tarojs/components'
 import { useRequireAuth } from '@/hooks/useAuth'
+import { useAuthStore } from '@/store/useAuthStore'
 import {
   getContractDetail,
   cancelContract,
@@ -12,6 +13,7 @@ import {
   downloadContract,
 } from '@/api/contracts'
 import { getTemplateDetail } from '@/api/templates'
+import { resolveStaticUrl } from '@/api/config'
 import './index.scss'
 
 const STATUS_MAP: Record<number, { text: string; type: string }> = {
@@ -37,6 +39,7 @@ export default function ContractDetailPage() {
   useRequireAuth()
   const router = useRouter()
   const contractId = Number(router.params.id)
+  const { role } = useAuthStore()
   const [detail, setDetail] = useState<any>(null)
   const [evidenceList, setEvidenceList] = useState<any[]>([])
   const [showEvidence, setShowEvidence] = useState(false)
@@ -79,7 +82,7 @@ export default function ContractDetailPage() {
     const p = participants.find((item: any) => item.order_num === orderNum)
     if (!p) return '<p style="color:#ccc">（未指定签署方）</p>'
     if (p.status === 2 && p.seal_data) {
-      return `<div><img src="${p.seal_data}" style="max-width:150px;max-height:80px;" /></div>`
+      return `<div><img src="${resolveStaticUrl(p.seal_data)}" style="max-width:150px;max-height:80px;" /></div>`
     }
     if (p.status === 2) {
       return `<p>${p.name || ''}（已签署）</p>`
@@ -313,7 +316,7 @@ export default function ContractDetailPage() {
                           <Text className='preview-signer-time'>签署时间：{p.sign_time}</Text>
                         )}
                         {p.seal_data && (
-                          <Image className='preview-seal-img' src={p.seal_data} mode='aspectFit' />
+                          <Image className='preview-seal-img' src={resolveStaticUrl(p.seal_data)} mode='aspectFit' />
                         )}
                       </View>
                     ))}
@@ -329,7 +332,7 @@ export default function ContractDetailPage() {
       <View className='action-bar-placeholder' />
       <View className='action-bar'>
         <View className='btn-group'>
-          {detail.status === 1 && (
+          {detail.status === 1 && role !== 'tenant' && (
             <View className='btn btn-primary btn-block' onClick={handleInitiate}>
               <Text>发起签署</Text>
             </View>
@@ -346,17 +349,17 @@ export default function ContractDetailPage() {
           )}
 
           <View className='secondary-btns'>
-            {detail.status === 2 && (
+            {detail.status === 2 && role !== 'tenant' && (
               <View className='btn btn-default btn-small sec-btn' onClick={handleUrge}>
                 <Text>催签</Text>
               </View>
             )}
-            {detail.status <= 2 && (
+            {detail.status <= 2 && role !== 'tenant' && (
               <View className='btn btn-small sec-btn cancel-btn' onClick={handleCancel}>
                 <Text>取消</Text>
               </View>
             )}
-            {(detail.status === 1 || detail.status === 4) && (
+            {(detail.status === 1 || detail.status === 4) && role !== 'tenant' && (
               <View className='btn btn-small sec-btn delete-btn' onClick={handleDelete}>
                 <Text>删除</Text>
               </View>

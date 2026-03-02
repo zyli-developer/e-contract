@@ -3,6 +3,7 @@ import Taro from '@tarojs/taro'
 import { View, Text, Input } from '@tarojs/components'
 import { login } from '@/api/auth'
 import { useAuthStore } from '@/store/useAuthStore'
+import Logo from '@/components/Logo'
 import './index.scss'
 
 export default function LoginPage() {
@@ -22,6 +23,7 @@ export default function LoginPage() {
       const data = await login({ mobile, password })
       setTokens(data.accessToken, data.refreshToken)
       setUserId(data.userId)
+      useAuthStore.getState().setRole(data.role || 'landlord')
       Taro.showToast({ title: '登录成功', icon: 'success' })
       const pages = Taro.getCurrentPages()
       if (pages.length > 1) {
@@ -39,12 +41,12 @@ export default function LoginPage() {
   return (
     <View className='login-page flex flex-col items-center min-h-screen'>
       {/* Header */}
-      <View className='w-full pt-[100px] pb-[60px] text-center'>
-        <View className='inline-flex items-center justify-center w-[140px] h-[140px] rounded-[40px] bg-white/25 mb-[32px] shadow-lg'>
-          <Text className='text-white text-[56px] font-black tracking-[4px]'>MC</Text>
+      <View className='w-full pt-[80px] pb-[60px] text-center'>
+        <View className='inline-flex items-center justify-center w-[160px] h-[160px] rounded-[40px] bg-white mb-[32px] shadow-lg'>
+          <Logo size={120} />
         </View>
-        <Text className='block text-[44px] font-extrabold text-white mb-[12px] tracking-[2px]'>Mini Contract</Text>
-        <Text className='block text-[26px] text-white/85 tracking-[1px]'>电子合同签署平台</Text>
+        <Text className='block text-[44px] font-extrabold text-white mb-[12px] tracking-[2px]'>点点租约</Text>
+        <Text className='block text-[26px] text-white/85 tracking-[1px]'>租房的第一份安全感，从‘点点’开始。</Text>
       </View>
 
       {/* Card */}

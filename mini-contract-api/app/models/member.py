@@ -20,5 +20,6 @@ class Member(Base):
     real_name_verified: Mapped[int] = mapped_column(SmallInteger, default=0, comment="实名认证: 0=未认证, 1=已认证")
     wx_openid: Mapped[str | None] = mapped_column(String(128), nullable=True, unique=True, comment="微信 OpenID")
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False, comment="是否管理员")
+    role: Mapped[str] = mapped_column(String(20), default="landlord", comment="角色: landlord=房东, tenant=租客")
     create_time: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     update_time: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())

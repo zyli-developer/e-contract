@@ -5,6 +5,7 @@ interface AuthState {
   token: string
   refreshToken: string
   userId: number | null
+  role: string
   userInfo: {
     nickname: string
     avatar: string
@@ -14,6 +15,7 @@ interface AuthState {
   setTokens: (token: string, refreshToken: string) => void
   setUserId: (userId: number) => void
   setUserInfo: (info: AuthState['userInfo']) => void
+  setRole: (role: string) => void
   logout: () => void
 }
 
@@ -21,6 +23,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   token: Taro.getStorageSync('token') || '',
   refreshToken: Taro.getStorageSync('refreshToken') || '',
   userId: Taro.getStorageSync('userId') || null,
+  role: Taro.getStorageSync('role') || 'landlord',
   userInfo: null,
 
   setTokens: (token, refreshToken) => {
@@ -36,10 +39,16 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   setUserInfo: (userInfo) => set({ userInfo }),
 
+  setRole: (role) => {
+    Taro.setStorageSync('role', role)
+    set({ role })
+  },
+
   logout: () => {
     Taro.removeStorageSync('token')
     Taro.removeStorageSync('refreshToken')
     Taro.removeStorageSync('userId')
-    set({ token: '', refreshToken: '', userId: null, userInfo: null })
+    Taro.removeStorageSync('role')
+    set({ token: '', refreshToken: '', userId: null, userInfo: null, role: 'landlord' })
   },
 }))

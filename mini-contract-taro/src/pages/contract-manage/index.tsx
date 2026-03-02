@@ -57,7 +57,7 @@ export default function ContractManagePage() {
       <View className='contract-manage'>
         <View className='login-prompt'>
           <Text className='prompt-icon'>📋</Text>
-          <Text className='prompt-text'>登录后即可管理您的电子合同</Text>
+          <Text className='prompt-text'>登录点点租约，管理您的租房合同</Text>
           <Text
             className='login-link'
             onClick={() => Taro.navigateTo({ url: '/pages/login/index' })}

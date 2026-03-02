@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Taro, { useRouter, useDidShow } from '@tarojs/taro'
 import { View, Text, RichText, Image, ScrollView, Input, Picker } from '@tarojs/components'
 import {
@@ -10,6 +10,7 @@ import { getTemplateDetail } from '@/api/templates'
 import { getSealList } from '@/api/seals'
 import { getUserInfo } from '@/api/member'
 import { useRequireAuth } from '@/hooks/useAuth'
+import { resolveStaticUrl } from '@/api/config'
 import './index.scss'
 
 interface SealItem {
@@ -32,24 +33,31 @@ export default function ContractSignPage() {
   const [loading, setLoading] = useState(false)
   const [signed, setSigned] = useState(false)
   const [realNameVerified, setRealNameVerified] = useState<boolean | null>(null)
-  // 乙方待填变量
-  const [partyBVars, setPartyBVars] = useState<{ name: string; label: string; type: string }[]>([])
-  const [partyBValues, setPartyBValues] = useState<Record<string, string>>({})
+  // 当前签署方的 party 标识（'A' | 'B'）
+  const [myParty, setMyParty] = useState<string>('')
+  // 当前签署方待填变量
+  const [myVars, setMyVars] = useState<{ name: string; label: string; type: string }[]>([])
+  const [myVarValues, setMyVarValues] = useState<Record<string, string>>({})
 
   const loadSeals = async () => {
     try {
       const sealData = await getSealList({ pageNo: 1, pageSize: 50 })
       const sealList = sealData?.list || []
       setSeals(sealList)
-      // 自动选中默认签名（仅未选择时）
-      if (!selectedSealId) {
+      // 自动选中默认签名（仅未手动选择时）— 用函数式更新避免闭包陷阱
+      setSelectedSealId(prev => {
+        if (prev) return prev
         const defaultSeal = sealList.find((s: SealItem) => s.is_default === 1)
-        if (defaultSeal) setSelectedSealId(defaultSeal.id)
-      }
+        return defaultSeal ? defaultSeal.id : null
+      })
     } catch {
       // 签名获取失败不阻塞
     }
   }
+
+  // 用 ref 保证 useDidShow 总是调用最新的 loadSeals
+  const loadSealsRef = useRef(loadSeals)
+  loadSealsRef.current = loadSeals
 
   useEffect(() => {
     if (contractId) loadData()
@@ -57,15 +65,17 @@ export default function ContractSignPage() {
 
   // 页面每次显示时刷新签名列表（从创建签名页返回时触发）
   useDidShow(() => {
-    loadSeals()
+    loadSealsRef.current()
   })
 
   const loadData = async () => {
     try {
-      // 检查实名认证状态
+      // 检查实名认证状态 + 获取当前用户手机号
+      let userMobile = ''
       try {
         const userInfo = await getUserInfo()
         setRealNameVerified(userInfo.real_name_verified === 1)
+        userMobile = userInfo.mobile || ''
       } catch {
         setRealNameVerified(false)
       }
@@ -74,6 +84,17 @@ export default function ContractSignPage() {
       const contractData = await getContractDetail(contractId)
       setDetail(contractData)
 
+      // 判断当前用户是甲方还是乙方（通过手机号匹配 participant）
+      const participants = contractData.participants || []
+      let currentParty = ''
+      for (const p of participants) {
+        if (p.mobile === userMobile) {
+          currentParty = p.order_num === 1 ? 'A' : 'B'
+          break
+        }
+      }
+      setMyParty(currentParty)
+
       // 如果有模板，获取模板内容并替换变量
       if (contractData.template_id) {
         try {
@@ -81,13 +102,12 @@ export default function ContractSignPage() {
           if (tpl?.content) {
             let html = tpl.content as string
             const vars = contractData.variables || {}
-            const participants = contractData.participants || []
             // 替换签章占位符
             const buildSig = (orderNum: number) => {
               const p = participants.find((item: any) => item.order_num === orderNum)
               if (!p) return '<p style="color:#ccc">（未指定签署方）</p>'
               if (p.status === 2 && p.seal_data) {
-                return `<div><img src="${p.seal_data}" style="max-width:150px;max-height:80px;" /></div>`
+                return `<div><img src="${resolveStaticUrl(p.seal_data)}" style="max-width:150px;max-height:80px;" /></div>`
               }
               if (p.status === 2) return `<p>${p.name || ''}（已签署）</p>`
               return '<p style="color:#ccc">（待签署）</p>'
@@ -100,17 +120,17 @@ export default function ContractSignPage() {
             })
             setContractHtml(html)
 
-            // 提取乙方待填变量（party=B 且尚未填写的变量）
+            // 提取当前签署方待填变量（属于自己这一方且尚未填写的变量）
             const tplVars = (tpl.variables || []) as { name: string; label: string; type: string; party?: string }[]
-            const bVars = tplVars.filter(v => {
-              const party = v.party || (v.name.startsWith('partyA') ? 'A' : v.name.startsWith('partyB') ? 'B' : 'common')
-              return party === 'B' && !vars[v.name]
+            const pendingVars = tplVars.filter(v => {
+              const varParty = v.party || (v.name.startsWith('partyA') ? 'A' : v.name.startsWith('partyB') ? 'B' : 'common')
+              return varParty === currentParty && !vars[v.name]
             })
-            setPartyBVars(bVars)
+            setMyVars(pendingVars)
             // 初始化值
             const initVals: Record<string, string> = {}
-            bVars.forEach(v => { initVals[v.name] = '' })
-            setPartyBValues(initVals)
+            pendingVars.forEach(v => { initVals[v.name] = '' })
+            setMyVarValues(initVals)
           }
         } catch {
           // 模板获取失败不阻塞签署
@@ -130,9 +150,9 @@ export default function ContractSignPage() {
       return
     }
 
-    // 校验乙方必填变量
-    for (const v of partyBVars) {
-      const val = partyBValues[v.name]?.trim()
+    // 校验当前签署方必填变量
+    for (const v of myVars) {
+      const val = myVarValues[v.name]?.trim()
       if (!val) {
         Taro.showToast({ title: `请填写${v.label}`, icon: 'none' })
         return
@@ -155,8 +175,8 @@ export default function ContractSignPage() {
 
     setLoading(true)
     try {
-      // 构建乙方变量
-      const vars = partyBVars.length > 0 ? { ...partyBValues } : undefined
+      // 构建当前签署方变量
+      const vars = myVars.length > 0 ? { ...myVarValues } : undefined
       await executeSign(contractId, selectedSealId, vars)
       setSigned(true)
       Taro.showToast({ title: '签署成功', icon: 'success' })
@@ -259,22 +279,22 @@ export default function ContractSignPage() {
       {/* 以下内容仅在实名认证后显示 */}
       {realNameVerified !== false && (
         <>
-          {/* 乙方信息填写 */}
-          {partyBVars.length > 0 && (
+          {/* 当前签署方信息填写 */}
+          {myVars.length > 0 && (
             <View className='partyb-section'>
-              <Text className='section-title'>乙方信息</Text>
-              {partyBVars.map(v => (
+              <Text className='section-title'>{myParty === 'A' ? '甲方' : '乙方'}信息</Text>
+              {myVars.map(v => (
                 v.type === 'date' ? (
                   <View key={v.name} className='form-item'>
                     <Text className='form-label'>{v.label}</Text>
                     <Picker
                       mode='date'
-                      value={partyBValues[v.name] || ''}
-                      onChange={(e) => setPartyBValues(prev => ({ ...prev, [v.name]: e.detail.value }))}
+                      value={myVarValues[v.name] || ''}
+                      onChange={(e) => setMyVarValues(prev => ({ ...prev, [v.name]: e.detail.value }))}
                     >
                       <View className='form-input picker-input'>
-                        <Text className={partyBValues[v.name] ? '' : 'placeholder-text'}>
-                          {partyBValues[v.name] || `请选择${v.label}`}
+                        <Text className={myVarValues[v.name] ? '' : 'placeholder-text'}>
+                          {myVarValues[v.name] || `请选择${v.label}`}
                         </Text>
                       </View>
                     </Picker>
@@ -285,8 +305,8 @@ export default function ContractSignPage() {
                     <Input
                       className='form-input'
                       placeholder={`请输入${v.label}`}
-                      value={partyBValues[v.name] || ''}
-                      onInput={(e) => setPartyBValues(prev => ({ ...prev, [v.name]: e.detail.value }))}
+                      value={myVarValues[v.name] || ''}
+                      onInput={(e) => setMyVarValues(prev => ({ ...prev, [v.name]: e.detail.value }))}
                     />
                   </View>
                 )
@@ -318,7 +338,7 @@ export default function ContractSignPage() {
                     className={`seal-option ${selectedSealId === seal.id ? 'selected' : ''}`}
                     onClick={() => setSelectedSealId(seal.id)}
                   >
-                    <Image className='seal-preview-img' src={seal.seal_data} mode='aspectFit' />
+                    <Image className='seal-preview-img' src={resolveStaticUrl(seal.seal_data)} mode='aspectFit' />
                     <Text className='seal-option-name'>
                       {seal.name}
                       {seal.is_default === 1 ? '(默认)' : ''}

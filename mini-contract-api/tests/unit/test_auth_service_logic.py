@@ -12,13 +12,14 @@ from app.services.auth_service import (
 )
 
 
-def _make_member(id=1, mobile="13800138000", password=None, status=1, nickname="test"):
+def _make_member(id=1, mobile="13800138000", password=None, status=1, nickname="test", role="landlord"):
     member = MagicMock()
     member.id = id
     member.mobile = mobile
     member.password = password
     member.status = status
     member.nickname = nickname
+    member.role = role
     return member
 
 
@@ -42,9 +43,9 @@ async def test_login_by_password_success():
     db = _make_db(scalar_return=member)
 
     with patch("app.services.auth_service._create_token_record", new_callable=AsyncMock) as mock_create:
-        mock_create.return_value = MagicMock(accessToken="at", refreshToken="rt", userId=1, expiresTime=0)
+        mock_create.return_value = MagicMock(accessToken="at", refreshToken="rt", userId=1, expiresTime=0, role="landlord")
         await login_by_password(db, "13800138000", "test123")
-        mock_create.assert_called_once_with(db, 1)
+        mock_create.assert_called_once_with(db, 1, role="landlord")
 
 
 @pytest.mark.anyio

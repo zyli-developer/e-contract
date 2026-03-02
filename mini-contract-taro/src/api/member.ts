@@ -10,6 +10,7 @@ export function getUserInfo() {
     avatar: string | null
     real_name_verified: number
     real_name: string | null
+    role: string
   }>({ url: '/member/user/get' })
 }
 

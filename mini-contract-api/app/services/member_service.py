@@ -1,8 +1,8 @@
 """用户信息管理服务"""
-import logging
 import os
 import re
 
+from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,8 +15,6 @@ from app.services.ocr_service import (
     extract_id_card_validity,
     check_id_card_expired,
 )
-
-logger = logging.getLogger(__name__)
 
 # 身份证号校验码权重
 _ID_WEIGHTS = [7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2]
@@ -50,10 +48,12 @@ def mask_id_card(id_card: str) -> str:
 
 async def get_user_info(db: AsyncSession, user_id: int) -> UserInfoResponse:
     """获取当前用户信息"""
+    logger.debug("获取用户信息: user_id=%d", user_id)
     result = await db.execute(select(Member).where(Member.id == user_id))
     member = result.scalar_one_or_none()
 
     if not member:
+        logger.warning("获取用户信息失败 - 用户不存在: user_id=%d", user_id)
         raise BusinessException(code=ErrorCode.USER_NOT_FOUND, msg="用户不存在")
 
     # 脱敏处理已认证用户的真实姓名
@@ -68,6 +68,7 @@ async def get_user_info(db: AsyncSession, user_id: int) -> UserInfoResponse:
         avatar=member.avatar,
         real_name_verified=member.real_name_verified or 0,
         real_name=masked_name,
+        role=member.role or "landlord",
     )
 
 
@@ -78,10 +79,12 @@ async def update_user_info(
     avatar: str | None = None,
 ) -> UserInfoResponse:
     """更新用户信息"""
+    logger.info("更新用户信息: user_id=%d, nickname=%s", user_id, nickname)
     result = await db.execute(select(Member).where(Member.id == user_id))
     member = result.scalar_one_or_none()
 
     if not member:
+        logger.warning("更新用户信息失败 - 用户不存在: user_id=%d", user_id)
         raise BusinessException(code=ErrorCode.USER_NOT_FOUND, msg="用户不存在")
 
     if nickname is not None:
@@ -91,6 +94,7 @@ async def update_user_info(
 
     await db.flush()
     await db.refresh(member)
+    logger.info("用户信息更新成功: user_id=%d", user_id)
 
     return UserInfoResponse(
         id=member.id,
@@ -99,6 +103,7 @@ async def update_user_info(
         avatar=member.avatar,
         real_name_verified=member.real_name_verified or 0,
         real_name=mask_real_name(member.real_name) if member.real_name_verified == 1 and member.real_name else None,
+        role=member.role or "landlord",
     )
 
 
@@ -109,10 +114,12 @@ async def update_password(
     confirm_password: str,
 ) -> None:
     """修改密码（通过确认密码验证）"""
+    logger.info("修改密码请求: user_id=%d", user_id)
     result = await db.execute(select(Member).where(Member.id == user_id))
     member = result.scalar_one_or_none()
 
     if not member:
+        logger.warning("修改密码失败 - 用户不存在: user_id=%d", user_id)
         raise BusinessException(code=ErrorCode.USER_NOT_FOUND, msg="用户不存在")
 
     if len(new_password) < 6:
@@ -123,6 +130,7 @@ async def update_password(
 
     member.password = hash_password(new_password)
     await db.flush()
+    logger.info("密码修改成功: user_id=%d", user_id)
 
 
 async def verify_real_name(
@@ -142,13 +150,16 @@ async def verify_real_name(
     3. 比对 OCR 结果与用户输入
     4. 匹配则保存认证信息
     """
+    logger.info("实名认证请求: user_id=%d", user_id)
     result = await db.execute(select(Member).where(Member.id == user_id))
     member = result.scalar_one_or_none()
 
     if not member:
+        logger.warning("实名认证失败 - 用户不存在: user_id=%d", user_id)
         raise BusinessException(code=ErrorCode.USER_NOT_FOUND, msg="用户不存在")
 
     if member.real_name_verified == 1:
+        logger.warning("实名认证失败 - 已认证: user_id=%d", user_id)
         raise BusinessException(code=400, msg="您已完成实名认证，无需重复认证")
 
     # 校验姓名
@@ -159,49 +170,73 @@ async def verify_real_name(
     # 校验身份证号格式
     id_card = id_card.strip()
     if not validate_id_card(id_card):
+        logger.warning("实名认证失败 - 身份证号格式不正确: user_id=%d", user_id)
         raise ValidationException("身份证号格式不正确")
 
-    # 从本地存储读取正面照片并 OCR 识别
+    # 从本地存储读取照片并 OCR 识别
     # URL 格式: /static/uploads/2025/01/01/xxx.jpg → 本地路径: uploads/2025/01/01/xxx.jpg
     front_path = id_card_front_url.replace("/static/uploads/", "uploads/")
-    if not os.path.isfile(front_path):
-        raise ValidationException("身份证正面照片不存在，请重新上传")
-
-    with open(front_path, "rb") as f:
-        image_bytes = f.read()
-
-    ocr_result = extract_id_card_info(image_bytes)
-    ocr_name = ocr_result.get("name")
-    ocr_id_number = ocr_result.get("id_number")
-
-    if not ocr_name and not ocr_id_number:
-        raise ValidationException("无法识别身份证信息，请上传清晰的身份证正面照片")
-
-    # 比对身份证号
-    if ocr_id_number and ocr_id_number != id_card.upper():
-        raise ValidationException("身份证号与身份证照片不一致")
-
-    # 比对姓名（去空格后比较）
-    if ocr_name and ocr_name.replace(" ", "") != real_name.replace(" ", ""):
-        raise ValidationException("姓名与身份证照片不一致")
-
-    # 读取背面照片，校验有效期
     back_path = id_card_back_url.replace("/static/uploads/", "uploads/")
+
+    if not os.path.isfile(front_path):
+        logger.warning("实名认证失败 - 正面照片不存在: user_id=%d, path=%s", user_id, front_path)
+        raise ValidationException("身份证正面照片不存在，请重新上传")
     if not os.path.isfile(back_path):
+        logger.warning("实名认证失败 - 背面照片不存在: user_id=%d, path=%s", user_id, back_path)
         raise ValidationException("身份证背面照片不存在，请重新上传")
 
-    with open(back_path, "rb") as f:
-        back_bytes = f.read()
+    try:
+        # OCR 识别正面
+        logger.info("开始 OCR 识别身份证正面: user_id=%d", user_id)
+        with open(front_path, "rb") as f:
+            image_bytes = f.read()
 
-    validity = extract_id_card_validity(back_bytes)
-    if check_id_card_expired(validity):
-        raise ValidationException("身份证已过期，请使用有效期内的身份证")
+        ocr_result = extract_id_card_info(image_bytes)
+        ocr_name = ocr_result.get("name")
+        ocr_id_number = ocr_result.get("id_number")
+        logger.info(
+            "OCR 识别结果: user_id=%d, 姓名识别=%s, 身份证号识别=%s",
+            user_id, bool(ocr_name), bool(ocr_id_number),
+        )
+
+        if not ocr_name and not ocr_id_number:
+            logger.warning("实名认证失败 - OCR 无法识别: user_id=%d", user_id)
+            raise ValidationException("无法识别身份证信息，请上传清晰的身份证正面照片")
+
+        # 比对身份证号
+        if ocr_id_number and ocr_id_number != id_card.upper():
+            logger.warning("实名认证失败 - 身份证号不一致: user_id=%d", user_id)
+            raise ValidationException("身份证号与身份证照片不一致")
+
+        # 比对姓名（去空格后比较）
+        if ocr_name and ocr_name.replace(" ", "") != real_name.replace(" ", ""):
+            logger.warning("实名认证失败 - 姓名不一致: user_id=%d", user_id)
+            raise ValidationException("姓名与身份证照片不一致")
+
+        # OCR 识别背面，校验有效期
+        logger.info("开始 OCR 识别身份证背面: user_id=%d", user_id)
+        with open(back_path, "rb") as f:
+            back_bytes = f.read()
+
+        validity = extract_id_card_validity(back_bytes)
+        if check_id_card_expired(validity):
+            logger.warning("实名认证失败 - 身份证已过期: user_id=%d", user_id)
+            raise ValidationException("身份证已过期，请使用有效期内的身份证")
+    finally:
+        # 身份证照片仅用于 OCR 校验，校验完毕立即删除，避免隐私泄露
+        for path in (front_path, back_path):
+            try:
+                os.remove(path)
+                logger.debug("已删除身份证照片: %s", path)
+            except OSError:
+                logger.warning("删除身份证照片失败: %s", path)
 
     member.real_name = real_name
     member.id_card = id_card
     member.real_name_verified = 1
     await db.flush()
 
+    logger.info("实名认证成功: user_id=%d", user_id)
     return {
         "real_name_verified": 1,
         "real_name": mask_real_name(real_name),

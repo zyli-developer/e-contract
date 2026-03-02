@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import Taro, { useRouter } from '@tarojs/taro'
 import { View, Text, Input, Picker } from '@tarojs/components'
-import { useRequireAuth } from '@/hooks/useAuth'
+import { useRequireAuth, useRequireLandlord } from '@/hooks/useAuth'
 import { createContract } from '@/api/contracts'
 import { getTemplateDetail } from '@/api/templates'
 import { getUserInfo } from '@/api/member'
@@ -22,6 +22,7 @@ interface Participant {
 
 export default function ContractCreatePage() {
   useRequireAuth()
+  useRequireLandlord()
   const router = useRouter()
   const templateId = router.params.templateId ? Number(router.params.templateId) : null
 

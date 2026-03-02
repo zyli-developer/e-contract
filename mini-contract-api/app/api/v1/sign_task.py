@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.response import ApiResponse
 from app.database import get_db
-from app.dependencies import get_current_user_id
+from app.dependencies import get_current_user_id, require_landlord
 from app.schemas.contract import (
     RejectRequest,
     SignRequest,
@@ -78,7 +78,7 @@ async def get_task(
 async def create_task(
     req: SignTaskCreateRequest,
     request: Request,
-    user_id: int = Depends(get_current_user_id),
+    user_id: int = Depends(require_landlord),
     db: AsyncSession = Depends(get_db),
 ):
     """创建合同"""
@@ -101,7 +101,7 @@ async def create_task(
 async def cancel_task(
     request: Request,
     id: int = Query(...),
-    user_id: int = Depends(get_current_user_id),
+    user_id: int = Depends(require_landlord),
     db: AsyncSession = Depends(get_db),
 ):
     """取消合同"""
@@ -116,7 +116,7 @@ async def cancel_task(
 @router.delete("/delete")
 async def delete_task(
     id: int = Query(...),
-    user_id: int = Depends(get_current_user_id),
+    user_id: int = Depends(require_landlord),
     db: AsyncSession = Depends(get_db),
 ):
     """删除合同"""
@@ -130,7 +130,7 @@ async def delete_task(
 async def initiate_signing(
     task_id: int,
     request: Request,
-    user_id: int = Depends(get_current_user_id),
+    user_id: int = Depends(require_landlord),
     db: AsyncSession = Depends(get_db),
 ):
     """发起签署（草稿 → 签署中）"""

@@ -2,7 +2,7 @@
   "name": "mini-contract-taro",
   "version": "0.1.0",
   "private": true,
-  "description": "Mini Contract Pro - 电子合同微信小程序",
+  "description": "点点租约 - 租房的第一份安全感，从“点点”开始。",
   "templateInfo": {
     "name": "default",
     "typescript": true,

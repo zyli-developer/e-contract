@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import Taro, { useDidShow } from '@tarojs/taro'
-import { View, Text } from '@tarojs/components'
+import { View, Text, Image } from '@tarojs/components'
 import { useRequireAuth } from '@/hooks/useAuth'
 import { getSealList, deleteSeal, setDefaultSeal } from '@/api/seals'
+import { resolveStaticUrl } from '@/api/config'
 import './index.scss'
 
 interface SealItem {
@@ -79,9 +80,10 @@ export default function SealsPage() {
           {seals.map((seal) => (
             <View key={seal.id} className='seal-item'>
               <View className='seal-preview'>
-                <View
+                <Image
                   className='seal-image'
-                  style={{ backgroundImage: `url(${seal.seal_data})` }}
+                  src={resolveStaticUrl(seal.seal_data)}
+                  mode='aspectFit'
                 />
               </View>
               <View className='seal-info'>

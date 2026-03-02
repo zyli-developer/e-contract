@@ -1,14 +1,13 @@
 """短信验证码发送服务"""
 import random
-import logging
+
+from loguru import logger
 
 from app.config import settings
 from app.utils.redis_client import (
     check_sms_rate_limit,
     set_sms_code,
 )
-
-logger = logging.getLogger(__name__)
 
 
 def _generate_code(length: int = 6) -> str:

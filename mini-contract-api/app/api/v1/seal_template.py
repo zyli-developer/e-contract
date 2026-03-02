@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.response import ApiResponse
 from app.database import get_db
-from app.dependencies import get_current_user_id
+from app.dependencies import require_landlord
 from app.services import template_service
 
 router = APIRouter(prefix="/seal/seal-template", tags=["合同模板"])
@@ -15,7 +15,7 @@ async def search_templates(
     category: str | None = None,
     pageNo: int = Query(1, ge=1),
     pageSize: int = Query(10, ge=1, le=50),
-    user_id: int = Depends(get_current_user_id),
+    user_id: int = Depends(require_landlord),
     db: AsyncSession = Depends(get_db),
 ):
     """搜索模板"""
@@ -26,7 +26,7 @@ async def search_templates(
 @router.get("/get")
 async def get_template(
     id: int = Query(...),
-    user_id: int = Depends(get_current_user_id),
+    user_id: int = Depends(require_landlord),
     db: AsyncSession = Depends(get_db),
 ):
     """模板详情"""
@@ -36,7 +36,7 @@ async def get_template(
 
 @router.get("/categories")
 async def get_categories(
-    user_id: int = Depends(get_current_user_id),
+    user_id: int = Depends(require_landlord),
 ):
     """分类列表"""
     return ApiResponse.success(data=template_service.CATEGORIES)
@@ -45,7 +45,7 @@ async def get_categories(
 @router.get("/hot")
 async def get_hot_templates(
     limit: int = Query(6, ge=1, le=20),
-    user_id: int = Depends(get_current_user_id),
+    user_id: int = Depends(require_landlord),
     db: AsyncSession = Depends(get_db),
 ):
     """热门模板"""
@@ -56,7 +56,7 @@ async def get_hot_templates(
 @router.get("/frequently-used")
 async def get_frequently_used(
     limit: int = Query(8, ge=1, le=20),
-    user_id: int = Depends(get_current_user_id),
+    user_id: int = Depends(require_landlord),
     db: AsyncSession = Depends(get_db),
 ):
     """常用模板"""

@@ -1,5 +1,6 @@
 from fastapi import Request
 from fastapi.responses import JSONResponse
+from loguru import logger
 
 
 class BusinessException(Exception):
@@ -41,6 +42,10 @@ class ErrorCode:
 # --- 全局异常处理器 ---
 
 async def business_exception_handler(request: Request, exc: BusinessException):
+    logger.warning(
+        "BusinessException: code=%s msg=%s path=%s",
+        exc.code, exc.msg, request.url.path,
+    )
     return JSONResponse(
         status_code=200,
         content={"code": exc.code, "msg": exc.msg, "data": None},
@@ -55,6 +60,10 @@ async def validation_exception_handler(request: Request, exc: Exception):
 
 
 async def generic_exception_handler(request: Request, exc: Exception):
+    logger.error(
+        "Unhandled exception: path=%s error=%s",
+        request.url.path, exc, exc_info=True,
+    )
     return JSONResponse(
         status_code=500,
         content={"code": 500, "msg": "服务器内部错误", "data": None},

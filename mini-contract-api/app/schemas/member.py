@@ -8,6 +8,7 @@ class UserInfoResponse(BaseModel):
     avatar: str | None = None
     real_name_verified: int = 0
     real_name: str | None = None
+    role: str = "landlord"
 
 
 class UpdateUserRequest(BaseModel):

@@ -22,6 +22,7 @@ def _make_member(
     id_card=None,
     real_name_verified=0,
     wx_openid=None,
+    role="landlord",
 ):
     member = MagicMock()
     member.id = id
@@ -33,6 +34,7 @@ def _make_member(
     member.id_card = id_card
     member.real_name_verified = real_name_verified
     member.wx_openid = wx_openid
+    member.role = role
     return member
 
 

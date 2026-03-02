@@ -1,12 +1,10 @@
 """微信 API 服务：access_token 管理、jscode2session、城市服务实名校验"""
-import logging
 import time
 
 import httpx
+from loguru import logger
 
 from app.config import settings
-
-logger = logging.getLogger(__name__)
 
 # access_token 缓存（进程级别）
 _access_token_cache: dict = {"token": "", "expires_at": 0}

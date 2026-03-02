@@ -2,6 +2,7 @@
 import re
 from datetime import date
 
+from loguru import logger
 from rapidocr_onnxruntime import RapidOCR
 
 ocr_engine = RapidOCR()
@@ -14,8 +15,10 @@ def extract_id_card_info(image_bytes: bytes) -> dict:
     Returns:
         {"name": str | None, "id_number": str | None, "raw_texts": list[str]}
     """
+    logger.info("OCR 识别身份证正面: image_size=%d bytes", len(image_bytes))
     result, _ = ocr_engine(image_bytes)
     texts = [item[1] for item in result] if result else []
+    logger.debug("OCR 识别原始文本: %s", texts)
 
     # 提取身份证号：18 位数字（最后一位可能是 X）
     id_number = None
@@ -57,6 +60,7 @@ def extract_id_card_validity(image_bytes: bytes) -> dict:
             "raw_texts": list[str],
         }
     """
+    logger.info("OCR 识别身份证背面: image_size=%d bytes", len(image_bytes))
     result, _ = ocr_engine(image_bytes)
     texts = [item[1] for item in result] if result else []
 

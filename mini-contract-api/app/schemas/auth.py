@@ -10,6 +10,7 @@ class RegisterRequest(BaseModel):
     mobile: str
     password: str
     nickname: str | None = None
+    role: str | None = None
 
 
 class RefreshTokenRequest(BaseModel):
@@ -26,3 +27,4 @@ class AuthTokenResponse(BaseModel):
     refreshToken: str
     userId: int
     expiresTime: int
+    role: str = "landlord"

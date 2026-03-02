@@ -6,7 +6,7 @@ from app.core.exceptions import BusinessException, ValidationException
 from app.services.member_service import get_user_info, update_user_info, update_password
 
 
-def _make_member(id=1, mobile="13800138000", nickname="test", avatar=None, status=1, password=None):
+def _make_member(id=1, mobile="13800138000", nickname="test", avatar=None, status=1, password=None, role="landlord"):
     member = MagicMock()
     member.id = id
     member.mobile = mobile
@@ -14,6 +14,9 @@ def _make_member(id=1, mobile="13800138000", nickname="test", avatar=None, statu
     member.avatar = avatar
     member.status = status
     member.password = password
+    member.role = role
+    member.real_name_verified = 0
+    member.real_name = None
     return member
 
 

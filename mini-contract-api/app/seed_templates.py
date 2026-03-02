@@ -1,12 +1,9 @@
 """合同模板种子数据"""
-import logging
-
+from loguru import logger
 from sqlalchemy import select
 
 from app.database import async_session_factory
 from app.models.contract_template import ContractTemplate
-
-logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # 房屋租赁合同 HTML 模板

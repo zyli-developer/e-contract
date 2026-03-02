@@ -8,12 +8,12 @@ export async function login(data: { mobile: string; password: string }) {
 }
 
 /** 注册（密码 RSA 加密传输） */
-export async function register(data: { mobile: string; password: string; nickname?: string }) {
+export async function register(data: { mobile: string; password: string; nickname?: string; role?: string }) {
   const encrypted = await encryptPassword(data.password)
   return request({
     url: '/member/auth/register',
     method: 'POST',
-    data: { mobile: data.mobile, password: encrypted, nickname: data.nickname },
+    data: { mobile: data.mobile, password: encrypted, nickname: data.nickname, role: data.role },
     isAuth: false,
   })
 }

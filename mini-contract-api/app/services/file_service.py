@@ -3,6 +3,7 @@ import os
 import uuid
 from datetime import datetime
 
+from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -24,12 +25,15 @@ ALLOWED_TYPES = ALLOWED_IMAGE_TYPES | ALLOWED_DOC_TYPES
 def validate_file(filename: str, content_type: str, size: int) -> None:
     """校验文件类型和大小"""
     if content_type not in ALLOWED_TYPES:
+        logger.warning("文件类型不支持: filename=%s, content_type=%s", filename, content_type)
         raise ValidationException(f"不支持的文件类型: {content_type}")
 
     if content_type in ALLOWED_IMAGE_TYPES and size > IMAGE_MAX_SIZE:
+        logger.warning("图片超出大小限制: filename=%s, size=%d", filename, size)
         raise ValidationException(f"图片大小不能超过 {IMAGE_MAX_SIZE // 1024 // 1024}MB")
 
     if content_type in ALLOWED_DOC_TYPES and size > DOCUMENT_MAX_SIZE:
+        logger.warning("文档超出大小限制: filename=%s, size=%d", filename, size)
         raise ValidationException(f"文档大小不能超过 {DOCUMENT_MAX_SIZE // 1024 // 1024}MB")
 
 
@@ -73,4 +77,6 @@ async def save_uploaded_file(content: bytes, file_key: str) -> str:
     with open(file_path, "wb") as f:
         f.write(content)
 
-    return f"/static/uploads/{file_key}"
+    url = f"/static/uploads/{file_key}"
+    logger.info("文件上传成功: file_key=%s, size=%d bytes", file_key, len(content))
+    return url

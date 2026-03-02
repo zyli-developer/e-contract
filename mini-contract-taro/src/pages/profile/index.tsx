@@ -9,7 +9,7 @@ import './index.scss'
 
 export default function ProfilePage() {
   const { isLoggedIn } = useAuth()
-  const { userInfo, setUserInfo, logout, token } = useAuthStore()
+  const { userInfo, setUserInfo, logout, token, role, setRole } = useAuthStore()
   const [realNameVerified, setRealNameVerified] = useState(0)
 
   const fetchUserInfo = async () => {
@@ -22,6 +22,7 @@ export default function ProfilePage() {
         mobile: info.mobile || '',
       })
       setRealNameVerified(info.real_name_verified || 0)
+      setRole(info.role || 'landlord')
     } catch {
       // 静默失败
     }
@@ -62,7 +63,7 @@ export default function ProfilePage() {
           >
             点击登录 / 注册
           </Text>
-          <Text className='guest-hint'>登录后体验完整电子合同服务</Text>
+          <Text className='guest-hint'>租房的第一份安全感，从‘点点’开始。</Text>
         </View>
       </View>
     )
@@ -84,6 +85,11 @@ export default function ProfilePage() {
         <View className='profile-info'>
           <View className='nickname-row'>
             <Text className='nickname'>{userInfo?.nickname || '未设置昵称'}</Text>
+            <View className={`verify-tag ${role === 'tenant' ? 'unverified' : 'verified'}`}>
+              <Text className='verify-tag-text'>
+                {role === 'tenant' ? '租客' : '房东'}
+              </Text>
+            </View>
             <View className={`verify-tag ${realNameVerified === 1 ? 'verified' : 'unverified'}`}>
               <Text className='verify-tag-text'>
                 {realNameVerified === 1 ? '已认证' : '未认证'}

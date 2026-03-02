@@ -34,7 +34,7 @@ async def login(req: LoginRequest, db: AsyncSession = Depends(get_db)):
 async def register(req: RegisterRequest, db: AsyncSession = Depends(get_db)):
     """用户注册"""
     password = rsa_decrypt(req.password)
-    result = await auth_service.register(db, req.mobile, password, req.nickname)
+    result = await auth_service.register(db, req.mobile, password, req.nickname, req.role)
     return ApiResponse.success(data=result.model_dump())
 
 

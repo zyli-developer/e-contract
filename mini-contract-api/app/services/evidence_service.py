@@ -2,6 +2,7 @@
 import hashlib
 from typing import Optional
 
+from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -30,6 +31,8 @@ async def log_evidence(
     detail: Optional[dict] = None,
 ) -> SignEvidenceLog:
     """记录一条证据链日志"""
+    logger.info("记录证据: task_id=%d, action=%s, user_id=%s, ip=%s",
+                task_id, action, user_id, ip)
     log = SignEvidenceLog(
         task_id=task_id,
         action=action,

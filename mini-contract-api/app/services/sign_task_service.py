@@ -1,9 +1,9 @@
 """合同签署任务服务"""
 import hashlib
-import logging
 from datetime import datetime
 from typing import List, Optional
 
+from loguru import logger
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -19,8 +19,6 @@ from app.schemas.contract import (
 )
 from app.services.evidence_service import EvidenceAction, log_evidence
 from app.utils.pagination import paginate
-
-logger = logging.getLogger(__name__)
 
 
 def _participant_response(p: SignTaskParticipant, seal_data: str | None = None) -> dict:
@@ -107,6 +105,7 @@ async def create_sign_task(
     device: str | None = None,
 ) -> dict:
     """创建合同签署任务"""
+    logger.info("创建合同: creator_id=%d, name=%s, template_id=%s", creator_id, name, template_id)
     if not name:
         raise ValidationException("合同名称不能为空")
     if not template_id and not file_url:
@@ -163,6 +162,8 @@ async def create_sign_task(
         detail={"name": name, "participants_count": len(participant_list)},
     )
 
+    logger.info("合同创建成功: task_id=%d, creator_id=%d, 签署方数=%d",
+                task.id, creator_id, len(participant_list))
     return _task_response(task, participant_list)
 
 
@@ -258,13 +259,16 @@ async def cancel_task(
     ip: str | None = None, device: str | None = None,
 ) -> None:
     """取消合同"""
+    logger.info("取消合同: task_id=%d, user_id=%d", task_id, user_id)
     result = await db.execute(
         select(SignTask).where(SignTask.id == task_id, SignTask.creator_id == user_id)
     )
     task = result.scalar_one_or_none()
     if not task:
+        logger.warning("取消合同失败 - 合同不存在: task_id=%d, user_id=%d", task_id, user_id)
         raise BusinessException(code=404, msg="合同不存在")
     if task.status not in (1, 2):
+        logger.warning("取消合同失败 - 状态不允许: task_id=%d, status=%d", task_id, task.status)
         raise BusinessException(code=400, msg="当前状态不允许取消")
 
     task.status = 4  # 已取消
@@ -280,17 +284,21 @@ async def cancel_task(
         device=device,
         detail={"previous_status": 2 if task.status == 4 else 1},
     )
+    logger.info("合同已取消: task_id=%d, user_id=%d", task_id, user_id)
 
 
 async def delete_task(db: AsyncSession, task_id: int, user_id: int) -> None:
     """删除合同（只能删除草稿和已取消的）"""
+    logger.info("删除合同: task_id=%d, user_id=%d", task_id, user_id)
     result = await db.execute(
         select(SignTask).where(SignTask.id == task_id, SignTask.creator_id == user_id)
     )
     task = result.scalar_one_or_none()
     if not task:
+        logger.warning("删除合同失败 - 合同不存在: task_id=%d, user_id=%d", task_id, user_id)
         raise BusinessException(code=404, msg="合同不存在")
     if task.status not in (1, 4):
+        logger.warning("删除合同失败 - 状态不允许: task_id=%d, status=%d", task_id, task.status)
         raise BusinessException(code=400, msg="当前状态不允许删除")
 
     await db.delete(task)
@@ -301,18 +309,22 @@ async def delete_task(db: AsyncSession, task_id: int, user_id: int) -> None:
     for p in p_result.scalars().all():
         await db.delete(p)
     await db.flush()
+    logger.info("合同已删除: task_id=%d", task_id)
 
 
 async def get_download_url(db: AsyncSession, task_id: int, user_id: int) -> dict:
     """获取已签署合同的下载 URL"""
+    logger.info("下载合同请求: task_id=%d, user_id=%d", task_id, user_id)
     task = await _get_task(db, task_id)
     if task.status != 3:
+        logger.warning("下载合同失败 - 未完成签署: task_id=%d, status=%d", task_id, task.status)
         raise BusinessException(code=400, msg="合同未完成签署，无法下载")
 
     # 只有创建者或签署方可下载
     is_creator = task.creator_id == user_id
     participant = await _find_participant_by_user(db, task_id, user_id)
     if not is_creator and not participant:
+        logger.warning("下载合同失败 - 无权限: task_id=%d, user_id=%d", task_id, user_id)
         raise ForbiddenException("无权下载此合同")
 
     return {
@@ -333,13 +345,16 @@ async def initiate_signing(
     ip: str | None = None, device: str | None = None,
 ) -> dict:
     """发起签署：草稿(1) → 签署中(2)"""
+    logger.info("发起签署: task_id=%d, user_id=%d", task_id, user_id)
     result = await db.execute(
         select(SignTask).where(SignTask.id == task_id, SignTask.creator_id == user_id)
     )
     task = result.scalar_one_or_none()
     if not task:
+        logger.warning("发起签署失败 - 合同不存在: task_id=%d, user_id=%d", task_id, user_id)
         raise BusinessException(code=404, msg="合同不存在")
     if task.status != 1:
+        logger.warning("发起签署失败 - 状态不允许: task_id=%d, status=%d", task_id, task.status)
         raise BusinessException(code=400, msg="只有草稿状态的合同才能发起签署")
 
     # 检查是否有签署方
@@ -380,8 +395,10 @@ async def execute_sign(
     ip: str | None = None, device: str | None = None,
 ) -> dict:
     """执行签署操作"""
+    logger.info("执行签署: task_id=%d, user_id=%d, seal_id=%s", task_id, user_id, seal_id)
     task = await _get_task(db, task_id)
     if task.status != 2:
+        logger.warning("签署失败 - 合同不在签署中状态: task_id=%d, status=%d", task_id, task.status)
         raise BusinessException(code=400, msg="合同不在签署中状态")
 
     # 获取签署方
@@ -407,10 +424,13 @@ async def execute_sign(
             participant = p_result.scalar_one_or_none()
 
     if not participant:
+        logger.warning("签署失败 - 非签署方: task_id=%d, user_id=%d", task_id, user_id)
         raise ForbiddenException("您不是此合同的签署方")
     if participant.status == 2:
+        logger.warning("签署失败 - 已签署: task_id=%d, user_id=%d", task_id, user_id)
         raise BusinessException(code=400, msg="您已签署此合同")
     if participant.status == 3:
+        logger.warning("签署失败 - 已拒签: task_id=%d, user_id=%d", task_id, user_id)
         raise BusinessException(code=400, msg="您已拒签此合同")
 
     # 合并签署方提交的变量（如乙方身份证等）
@@ -442,6 +462,8 @@ async def execute_sign(
     # 检查是否所有签署方都已签署
     await _check_all_signed(db, task, ip=ip, device=device)
 
+    logger.info("签署完成: task_id=%d, user_id=%d, participant_id=%d",
+                task_id, user_id, participant.id)
     participants = await _get_participants(db, task.id)
     return _task_response(task, participants)
 
@@ -452,14 +474,18 @@ async def reject_sign(
     ip: str | None = None, device: str | None = None,
 ) -> dict:
     """拒签"""
+    logger.info("拒签请求: task_id=%d, user_id=%d, reason=%s", task_id, user_id, reason)
     task = await _get_task(db, task_id)
     if task.status != 2:
+        logger.warning("拒签失败 - 合同不在签署中状态: task_id=%d, status=%d", task_id, task.status)
         raise BusinessException(code=400, msg="合同不在签署中状态")
 
     participant = await _find_participant_by_user(db, task_id, user_id)
     if not participant:
+        logger.warning("拒签失败 - 非签署方: task_id=%d, user_id=%d", task_id, user_id)
         raise ForbiddenException("您不是此合同的签署方")
     if participant.status != 0:
+        logger.warning("拒签失败 - 状态不允许: task_id=%d, participant_status=%d", task_id, participant.status)
         raise BusinessException(code=400, msg="当前状态不允许操作")
 
     # 更新签署方状态
@@ -481,6 +507,7 @@ async def reject_sign(
         detail={"reason": reason, "participant_id": participant.id},
     )
 
+    logger.info("合同已拒签: task_id=%d, user_id=%d", task_id, user_id)
     participants = await _get_participants(db, task.id)
     return _task_response(task, participants)
 
@@ -586,6 +613,7 @@ async def _check_all_signed(
     if unsigned_count == 0:
         task.status = 3  # 已完成
         task.complete_time = datetime.now()
+        logger.info("合同全部签署完成: task_id=%d", task.id)
 
         # MVP: 用文件 URL 模拟签署后文件哈希
         if task.file_url:

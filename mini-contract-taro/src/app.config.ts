@@ -43,7 +43,7 @@ export default defineAppConfig({
   window: {
     backgroundTextStyle: 'light',
     navigationBarBackgroundColor: '#00C28A',
-    navigationBarTitleText: 'Mini Contract',
+    navigationBarTitleText: '点点租约',
     navigationBarTextStyle: 'white',
   },
 })
