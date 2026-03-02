@@ -28,7 +28,7 @@ def _participant_response(p: SignTaskParticipant, seal_data: str | None = None) 
         mobile=p.mobile,
         status=p.status,
         order_num=p.order_num,
-        sign_time=p.sign_time.isoformat() if p.sign_time else None,
+        sign_time=p.sign_time.strftime("%Y-%m-%d %H:%M:%S") if p.sign_time else None,
         seal_data=seal_data,
     ).model_dump()
 
@@ -46,8 +46,8 @@ def _task_response(task: SignTask, participants: list) -> dict:
         creator_id=task.creator_id,
         remark=task.remark,
         variables=task.variables,
-        create_time=task.create_time.isoformat() if task.create_time else None,
-        complete_time=task.complete_time.isoformat() if task.complete_time else None,
+        create_time=task.create_time.strftime("%Y-%m-%d %H:%M:%S") if task.create_time else None,
+        complete_time=task.complete_time.strftime("%Y-%m-%d %H:%M:%S") if task.complete_time else None,
         participants=participants,
     ).model_dump()
 
@@ -630,5 +630,5 @@ async def _check_all_signed(
             task_id=task.id,
             action=EvidenceAction.CONTRACT_COMPLETED,
             data_hash=task.signed_file_hash,
-            detail={"complete_time": task.complete_time.isoformat()},
+            detail={"complete_time": task.complete_time.strftime("%Y-%m-%d %H:%M:%S")},
         )

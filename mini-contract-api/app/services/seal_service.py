@@ -19,7 +19,7 @@ def _to_response(seal: SealInfo) -> dict:
         type=seal.type,
         seal_data=seal.seal_data,
         is_default=seal.is_default,
-        create_time=seal.create_time.isoformat() if seal.create_time else None,
+        create_time=seal.create_time.strftime("%Y-%m-%d %H:%M:%S") if seal.create_time else None,
     ).model_dump()
 
 

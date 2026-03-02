@@ -66,7 +66,7 @@ async def get_evidence_list(db: AsyncSession, task_id: int) -> list[dict]:
             "device": log.device,
             "data_hash": log.data_hash,
             "detail": log.detail,
-            "create_time": log.create_time.isoformat() if log.create_time else None,
+            "create_time": log.create_time.strftime("%Y-%m-%d %H:%M:%S") if log.create_time else None,
         }
         for log in logs
     ]
