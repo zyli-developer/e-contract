@@ -1,12 +1,12 @@
 {
   "miniprogramRoot": "dist/",
-  "projectname": "mini-contract-taro",
-  "description": "Mini Contract Pro - 电子合同微信小程序",
-  "appid": "wxa6f9e48551b60c87",
+  "projectname": "diandian-zuyue",
+  "description": "点点租约 - 租房的第一份安全感，从“点点”开始。",
+  "appid": "wxff976eb0ac6d7f97",
   "setting": {
     "urlCheck": false,
-    "es6": false,
-    "enhance": false,
+    "es6": true,
+    "enhance": true,
     "compileHotReLoad": false,
     "postcss": false,
     "minified": false,

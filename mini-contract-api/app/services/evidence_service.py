@@ -2,6 +2,7 @@
 import hashlib
 from typing import Optional
 
+from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,8 +14,6 @@ class EvidenceAction:
     CONTRACT_CREATED = "CONTRACT_CREATED"
     CONTRACT_SENT = "CONTRACT_SENT"
     SIGNER_VIEWED = "SIGNER_VIEWED"
-    SIGN_CODE_SENT = "SIGN_CODE_SENT"
-    SIGN_CODE_VERIFIED = "SIGN_CODE_VERIFIED"
     CONTRACT_SIGNED = "CONTRACT_SIGNED"
     CONTRACT_COMPLETED = "CONTRACT_COMPLETED"
     CONTRACT_CANCELLED = "CONTRACT_CANCELLED"
@@ -32,6 +31,8 @@ async def log_evidence(
     detail: Optional[dict] = None,
 ) -> SignEvidenceLog:
     """记录一条证据链日志"""
+    logger.info("记录证据: task_id=%d, action=%s, user_id=%s, ip=%s",
+                task_id, action, user_id, ip)
     log = SignEvidenceLog(
         task_id=task_id,
         action=action,

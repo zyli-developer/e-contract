@@ -1,14 +1,12 @@
-import logging
 from urllib.parse import urlparse, urlunparse
 
 import asyncpg
 import sqlalchemy
+from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
 from app.config import settings
-
-logger = logging.getLogger(__name__)
 
 engine = create_async_engine(
     settings.DATABASE_URL,
@@ -75,6 +73,38 @@ async def init_db():
                     "ALTER TABLE member ALTER COLUMN mobile DROP NOT NULL"
                 )
             )
+            # 合同变量值列
+            await conn.execute(
+                sqlalchemy.text(
+                    "ALTER TABLE sign_task ADD COLUMN IF NOT EXISTS variables JSON"
+                )
+            )
+            # 实名认证字段
+            await conn.execute(
+                sqlalchemy.text(
+                    "ALTER TABLE member ADD COLUMN IF NOT EXISTS real_name VARCHAR(50)"
+                )
+            )
+            await conn.execute(
+                sqlalchemy.text(
+                    "ALTER TABLE member ADD COLUMN IF NOT EXISTS id_card VARCHAR(50)"
+                )
+            )
+            await conn.execute(
+                sqlalchemy.text(
+                    "ALTER TABLE member ADD COLUMN IF NOT EXISTS real_name_verified SMALLINT DEFAULT 0"
+                )
+            )
+            await conn.execute(
+                sqlalchemy.text(
+                    "ALTER TABLE member ADD COLUMN IF NOT EXISTS wx_openid VARCHAR(128)"
+                )
+            )
+            await conn.execute(
+                sqlalchemy.text(
+                    "ALTER TABLE member ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'landlord'"
+                )
+            )
         logger.info("数据库表初始化完成")
     except Exception as e:
         logger.warning("数据库连接失败，跳过自动建表: %s", e)
@@ -97,7 +127,7 @@ async def seed_admin():
             if result.scalar_one_or_none() is None:
                 admin = Member(
                     mobile=admin_mobile,
-                    password=hash_password("15679132250"),
+                    password=hash_password("WDEBDFu4"),
                     nickname="管理员",
                     status=1,
                     is_admin=True,

@@ -85,12 +85,37 @@
   flex: 1;
 }
 
+.nickname-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
 .nickname {
-  display: block;
   font-size: 40px;
   font-weight: 800;
   color: #fff;
-  margin-bottom: 12px;
+}
+
+.verify-tag {
+  display: inline-flex;
+  padding: 2px 12px;
+  border-radius: 16px;
+  font-size: 20px;
+
+  &.verified {
+    background: rgba(255, 255, 255, 0.3);
+  }
+
+  &.unverified {
+    background: rgba(255, 165, 0, 0.4);
+  }
+}
+
+.verify-tag-text {
+  font-size: 20px;
+  color: #fff;
 }
 
 .mobile-tag {
@@ -137,6 +162,19 @@
     flex: 1;
     font-size: 28px;
     color: #333;
+  }
+
+  .menu-status {
+    font-size: 24px;
+    margin-right: 8px;
+
+    &.status-done {
+      color: #00C28A;
+    }
+
+    &.status-todo {
+      color: #fa8c16;
+    }
   }
 
   .menu-arrow {

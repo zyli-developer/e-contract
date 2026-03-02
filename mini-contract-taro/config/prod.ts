@@ -3,7 +3,9 @@ export default {
     NODE_ENV: '"production"',
   },
   defineConstants: {},
-  mini: {},
+  mini: {
+    enableSourceMap: false,
+  },
   h5: {
     enableExtract: true,
   },

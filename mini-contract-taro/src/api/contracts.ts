@@ -40,19 +40,9 @@ export function initiateSign(id: string | number) {
   return request({ url: `/seal/sign-task/${id}/initiate`, method: 'POST' })
 }
 
-/** 发送签署验证码 */
-export function sendSignCode(id: string | number) {
-  return request({ url: `/seal/sign-task/${id}/send-sign-code`, method: 'POST' })
-}
-
-/** 验证签署验证码 */
-export function verifySignCode(id: string | number, code: string) {
-  return request({ url: `/seal/sign-task/${id}/verify-sign-code`, method: 'POST', data: { code } })
-}
-
 /** 执行签署 */
-export function executeSign(id: string | number, sealId?: number) {
-  return request({ url: `/seal/sign-task/${id}/sign`, method: 'POST', data: { seal_id: sealId } })
+export function executeSign(id: string | number, sealId?: number, variables?: Record<string, string>) {
+  return request({ url: `/seal/sign-task/${id}/sign`, method: 'POST', data: { seal_id: sealId, variables } })
 }
 
 /** 拒签 */

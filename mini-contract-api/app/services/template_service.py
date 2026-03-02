@@ -1,4 +1,5 @@
 """合同模板服务"""
+from loguru import logger
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -38,6 +39,7 @@ async def search_templates(
     page_size: int = 10,
 ) -> PageResult:
     """搜索模板（分页 + 分类 + 关键词）"""
+    logger.debug("搜索模板: keyword=%s, category=%s, page=%d", keyword, category, page_no)
     query = select(ContractTemplate).where(ContractTemplate.status == 1)
 
     if category:
@@ -53,11 +55,13 @@ async def search_templates(
 
 async def get_template_detail(db: AsyncSession, template_id: int) -> dict:
     """获取模板详情"""
+    logger.debug("获取模板详情: template_id=%d", template_id)
     result = await db.execute(
         select(ContractTemplate).where(ContractTemplate.id == template_id, ContractTemplate.status == 1)
     )
     template = result.scalar_one_or_none()
     if not template:
+        logger.warning("模板不存在: template_id=%d", template_id)
         raise BusinessException(code=404, msg="模板不存在")
 
     return TemplateDetailResponse(

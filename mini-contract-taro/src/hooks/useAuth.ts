@@ -30,3 +30,18 @@ export function useRequireAuth() {
 
   return !!token
 }
+
+/** 路由守卫 Hook：要求房东角色，租客跳转回上一页 */
+export function useRequireLandlord() {
+  const { token } = useAuthStore()
+  const role = useAuthStore.getState().role
+
+  useDidShow(() => {
+    if (!token) {
+      Taro.redirectTo({ url: '/pages/login/index' })
+    } else if (role === 'tenant') {
+      Taro.showToast({ title: '该功能仅房东可用', icon: 'none' })
+      Taro.navigateBack()
+    }
+  })
+}

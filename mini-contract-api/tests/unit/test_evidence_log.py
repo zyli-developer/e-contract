@@ -12,18 +12,19 @@ def test_evidence_action_constants():
         EvidenceAction.CONTRACT_CREATED,
         EvidenceAction.CONTRACT_SENT,
         EvidenceAction.SIGNER_VIEWED,
-        EvidenceAction.SIGN_CODE_SENT,
-        EvidenceAction.SIGN_CODE_VERIFIED,
         EvidenceAction.CONTRACT_SIGNED,
         EvidenceAction.CONTRACT_COMPLETED,
         EvidenceAction.CONTRACT_CANCELLED,
         EvidenceAction.CONTRACT_REJECTED,
     ]
-    assert len(actions) == 9
+    assert len(actions) == 7
     # 每个 action 应该是字符串
     for action in actions:
         assert isinstance(action, str)
         assert len(action) > 0
+    # 不应包含 SMS 相关操作
+    assert not hasattr(EvidenceAction, "SIGN_CODE_SENT")
+    assert not hasattr(EvidenceAction, "SIGN_CODE_VERIFIED")
 
 
 def test_evidence_action_unique():
@@ -32,14 +33,12 @@ def test_evidence_action_unique():
         EvidenceAction.CONTRACT_CREATED,
         EvidenceAction.CONTRACT_SENT,
         EvidenceAction.SIGNER_VIEWED,
-        EvidenceAction.SIGN_CODE_SENT,
-        EvidenceAction.SIGN_CODE_VERIFIED,
         EvidenceAction.CONTRACT_SIGNED,
         EvidenceAction.CONTRACT_COMPLETED,
         EvidenceAction.CONTRACT_CANCELLED,
         EvidenceAction.CONTRACT_REJECTED,
     ]
-    assert len(set(actions)) == 9
+    assert len(set(actions)) == 7
 
 
 def test_compute_file_hash():

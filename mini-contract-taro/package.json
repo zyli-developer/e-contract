@@ -2,7 +2,7 @@
   "name": "mini-contract-taro",
   "version": "0.1.0",
   "private": true,
-  "description": "Mini Contract Pro - 电子合同微信小程序",
+  "description": "点点租约 - 租房的第一份安全感，从“点点”开始。",
   "templateInfo": {
     "name": "default",
     "typescript": true,
@@ -35,6 +35,7 @@
     "@tarojs/taro": "4.x",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
+    "wxmp-rsa": "^2.1.0",
     "zustand": "^4.5.0"
   },
   "devDependencies": {
@@ -49,6 +50,7 @@
     "autoprefixer": "^10.4.27",
     "babel-preset-taro": "4.x",
     "jest": "^29.7.0",
+    "jest-environment-jsdom": "^30.2.0",
     "msw": "^2.3.0",
     "postcss": "^8.4.0",
     "sass": "^1.77.0",

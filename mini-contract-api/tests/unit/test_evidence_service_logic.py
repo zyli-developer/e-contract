@@ -74,8 +74,6 @@ async def test_log_evidence_all_action_types():
         EvidenceAction.CONTRACT_CREATED,
         EvidenceAction.CONTRACT_SENT,
         EvidenceAction.SIGNER_VIEWED,
-        EvidenceAction.SIGN_CODE_SENT,
-        EvidenceAction.SIGN_CODE_VERIFIED,
         EvidenceAction.CONTRACT_SIGNED,
         EvidenceAction.CONTRACT_COMPLETED,
         EvidenceAction.CONTRACT_CANCELLED,

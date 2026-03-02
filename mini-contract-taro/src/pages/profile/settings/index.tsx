@@ -4,7 +4,6 @@ import { View, Text, Input } from '@tarojs/components'
 import { useRequireAuth } from '@/hooks/useAuth'
 import { useAuthStore } from '@/store/useAuthStore'
 import { updateUserInfo, updatePassword } from '@/api/member'
-import { sendSmsCode } from '@/api/auth'
 import './index.scss'
 
 export default function SettingsPage() {
@@ -13,8 +12,7 @@ export default function SettingsPage() {
   const [nickname, setNickname] = useState(userInfo?.nickname || '')
   const [showPasswordForm, setShowPasswordForm] = useState(false)
   const [newPassword, setNewPassword] = useState('')
-  const [smsCode, setSmsCode] = useState('')
-  const [countdown, setCountdown] = useState(0)
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
 
   const handleSaveNickname = async () => {
@@ -34,42 +32,22 @@ export default function SettingsPage() {
     }
   }
 
-  const handleSendCode = async () => {
-    if (countdown > 0) return
-    try {
-      await sendSmsCode({ mobile: userInfo?.mobile || '', scene: 3 })
-      Taro.showToast({ title: '验证码已发送', icon: 'success' })
-      setCountdown(60)
-      const timer = setInterval(() => {
-        setCountdown((prev) => {
-          if (prev <= 1) {
-            clearInterval(timer)
-            return 0
-          }
-          return prev - 1
-        })
-      }, 1000)
-    } catch (e: any) {
-      Taro.showToast({ title: e.message || '发送失败', icon: 'none' })
-    }
-  }
-
   const handleChangePassword = async () => {
     if (!newPassword || newPassword.length < 6) {
       Taro.showToast({ title: '密码长度不能少于 6 位', icon: 'none' })
       return
     }
-    if (!smsCode) {
-      Taro.showToast({ title: '请输入验证码', icon: 'none' })
+    if (newPassword !== confirmPassword) {
+      Taro.showToast({ title: '两次密码输入不一致', icon: 'none' })
       return
     }
     setLoading(true)
     try {
-      await updatePassword({ password: newPassword, code: smsCode })
+      await updatePassword({ password: newPassword, confirmPassword })
       Taro.showToast({ title: '密码修改成功', icon: 'success' })
       setShowPasswordForm(false)
       setNewPassword('')
-      setSmsCode('')
+      setConfirmPassword('')
     } catch (e: any) {
       Taro.showToast({ title: e.message || '修改失败', icon: 'none' })
     } finally {
@@ -118,22 +96,13 @@ export default function SettingsPage() {
               value={newPassword}
               onInput={(e) => setNewPassword(e.detail.value)}
             />
-            <View className='sms-row'>
-              <Input
-                className='sms-input'
-                placeholder='请输入验证码'
-                type='number'
-                maxlength={6}
-                value={smsCode}
-                onInput={(e) => setSmsCode(e.detail.value)}
-              />
-              <View
-                className={`btn btn-default btn-small sms-btn ${countdown > 0 ? 'btn-disabled' : ''}`}
-                onClick={countdown > 0 ? undefined : handleSendCode}
-              >
-                <Text>{countdown > 0 ? `${countdown}s` : '获取验证码'}</Text>
-              </View>
-            </View>
+            <Input
+              className='pw-input'
+              placeholder='请再次输入新密码'
+              password
+              value={confirmPassword}
+              onInput={(e) => setConfirmPassword(e.detail.value)}
+            />
             <View
               className={`btn btn-primary btn-block ${loading ? 'btn-loading' : ''}`}
               onClick={loading ? undefined : handleChangePassword}

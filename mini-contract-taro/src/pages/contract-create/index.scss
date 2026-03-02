@@ -166,6 +166,72 @@
   color: #ccc;
 }
 
+// 模板模式: 表单标签行（含自动填充标签）
+.form-label-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+
+  .form-label {
+    margin-bottom: 0;
+  }
+}
+
+.auto-fill-tag {
+  display: inline-block;
+  font-size: 20px;
+  color: #00C28A;
+  background: #f0faf6;
+  padding: 4px 16px;
+  border-radius: 8px;
+  border: 1px solid #b7ebd8;
+}
+
+// 日期选择器样式
+.picker-input {
+  display: flex;
+  align-items: center;
+}
+
+.placeholder-text {
+  color: #bbb;
+}
+
+// 签署方卡片
+.signer-card {
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  border-radius: 20px;
+  margin-bottom: 24px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.signer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  background: #fafafa;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.signer-role {
+  font-size: 26px;
+  font-weight: 800;
+  color: #333;
+}
+
+.signer-info {
+  padding: 20px 24px;
+}
+
+.signer-phone {
+  font-size: 28px;
+  color: #666;
+}
+
 .bottom-bar {
   position: fixed;
   bottom: 0;

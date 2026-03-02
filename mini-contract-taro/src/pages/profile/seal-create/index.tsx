@@ -3,6 +3,8 @@ import Taro from '@tarojs/taro'
 import { View, Text, Canvas } from '@tarojs/components'
 import { useRequireAuth } from '@/hooks/useAuth'
 import { createSeal } from '@/api/seals'
+import { BASE_URL } from '@/api/config'
+import { useAuthStore } from '@/store/useAuthStore'
 import './index.scss'
 
 export default function SealCreatePage() {
@@ -54,6 +56,22 @@ export default function SealCreatePage() {
     pointsRef.current = []
   }
 
+  /** 将本地临时文件上传到服务器，返回服务器 URL */
+  const uploadToServer = async (tempFilePath: string): Promise<string> => {
+    const { token } = useAuthStore.getState()
+    const uploadRes = await Taro.uploadFile({
+      url: `${BASE_URL}/infra/file/upload`,
+      filePath: tempFilePath,
+      name: 'file',
+      header: { Authorization: `Bearer ${token}` },
+    })
+    const data = JSON.parse(uploadRes.data)
+    if (data.code === 0 || data.code === 200) {
+      return data.data.url
+    }
+    throw new Error(data.msg || '上传失败')
+  }
+
   const handleSaveDrawing = async () => {
     if (!hasDrawn) {
       Taro.showToast({ title: '请先签名', icon: 'none' })
@@ -65,10 +83,11 @@ export default function SealCreatePage() {
         canvasId: 'signCanvas',
         fileType: 'png',
       })
+      const serverUrl = await uploadToServer(res.tempFilePath)
       await createSeal({
         name: sealType === 11 ? '我的签名' : '我的印章',
         type: sealType,
-        seal_data: res.tempFilePath,
+        seal_data: serverUrl,
       })
       Taro.showToast({ title: '创建成功', icon: 'success' })
       setTimeout(() => Taro.navigateBack(), 1500)
@@ -89,10 +108,11 @@ export default function SealCreatePage() {
       const tempPath = chooseRes.tempFilePaths[0]
 
       setLoading(true)
+      const serverUrl = await uploadToServer(tempPath)
       await createSeal({
         name: sealType === 11 ? '我的签名' : '我的印章',
         type: sealType,
-        seal_data: tempPath,
+        seal_data: serverUrl,
       })
       Taro.showToast({ title: '创建成功', icon: 'success' })
       setTimeout(() => Taro.navigateBack(), 1500)
@@ -143,7 +163,7 @@ export default function SealCreatePage() {
 
       {activeTab === 0 ? (
         <View className='canvas-section'>
-          <View className='canvas-wrapper'>
+          <View className='canvas-wrapper' catchMove>
             <Canvas
               canvasId='signCanvas'
               className='sign-canvas'

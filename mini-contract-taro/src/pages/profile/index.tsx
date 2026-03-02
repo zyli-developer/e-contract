@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import Taro, { useDidShow } from '@tarojs/taro'
 import { View, Text, Image } from '@tarojs/components'
 import { useAuth } from '@/hooks/useAuth'
@@ -8,7 +9,8 @@ import './index.scss'
 
 export default function ProfilePage() {
   const { isLoggedIn } = useAuth()
-  const { userInfo, setUserInfo, logout, token } = useAuthStore()
+  const { userInfo, setUserInfo, logout, token, role, setRole } = useAuthStore()
+  const [realNameVerified, setRealNameVerified] = useState(0)
 
   const fetchUserInfo = async () => {
     if (!token) return
@@ -19,6 +21,8 @@ export default function ProfilePage() {
         avatar: info.avatar || '',
         mobile: info.mobile || '',
       })
+      setRealNameVerified(info.real_name_verified || 0)
+      setRole(info.role || 'landlord')
     } catch {
       // 静默失败
     }
@@ -51,7 +55,7 @@ export default function ProfilePage() {
       <View className='profile-page'>
         <View className='profile-header-guest'>
           <View className='avatar-placeholder'>
-            <Text className='avatar-placeholder-text'>👤</Text>
+            <Text className='avatar-placeholder-text'>&#128100;</Text>
           </View>
           <Text
             className='login-link'
@@ -59,7 +63,7 @@ export default function ProfilePage() {
           >
             点击登录 / 注册
           </Text>
-          <Text className='guest-hint'>登录后体验完整电子合同服务</Text>
+          <Text className='guest-hint'>租房的第一份安全感，从‘点点’开始。</Text>
         </View>
       </View>
     )
@@ -79,7 +83,19 @@ export default function ProfilePage() {
           )}
         </View>
         <View className='profile-info'>
-          <Text className='nickname'>{userInfo?.nickname || '未设置昵称'}</Text>
+          <View className='nickname-row'>
+            <Text className='nickname'>{userInfo?.nickname || '未设置昵称'}</Text>
+            <View className={`verify-tag ${role === 'tenant' ? 'unverified' : 'verified'}`}>
+              <Text className='verify-tag-text'>
+                {role === 'tenant' ? '租客' : '房东'}
+              </Text>
+            </View>
+            <View className={`verify-tag ${realNameVerified === 1 ? 'verified' : 'unverified'}`}>
+              <Text className='verify-tag-text'>
+                {realNameVerified === 1 ? '已认证' : '未认证'}
+              </Text>
+            </View>
+          </View>
           <View className='mobile-tag'>
             <Text className='mobile'>{userInfo?.mobile || ''}</Text>
           </View>
@@ -91,25 +107,36 @@ export default function ProfilePage() {
         <View className='menu-group'>
           <View
             className='menu-item'
+            onClick={() => Taro.navigateTo({ url: '/pages/profile/realname/index' })}
+          >
+            <Text className='menu-icon'>&#128196;</Text>
+            <Text className='menu-title'>实名认证</Text>
+            <Text className={`menu-status ${realNameVerified === 1 ? 'status-done' : 'status-todo'}`}>
+              {realNameVerified === 1 ? '已认证' : '去认证'}
+            </Text>
+            <Text className='menu-arrow'>&#8250;</Text>
+          </View>
+          <View
+            className='menu-item'
             onClick={() => Taro.navigateTo({ url: '/pages/profile/seals/index' })}
           >
-            <Text className='menu-icon'>✍️</Text>
+            <Text className='menu-icon'>&#9997;&#65039;</Text>
             <Text className='menu-title'>个人签名管理</Text>
-            <Text className='menu-arrow'>›</Text>
+            <Text className='menu-arrow'>&#8250;</Text>
           </View>
           <View
             className='menu-item'
             onClick={() => Taro.navigateTo({ url: '/pages/profile/settings/index' })}
           >
-            <Text className='menu-icon'>⚙️</Text>
+            <Text className='menu-icon'>&#9881;&#65039;</Text>
             <Text className='menu-title'>修改个人信息</Text>
-            <Text className='menu-arrow'>›</Text>
+            <Text className='menu-arrow'>&#8250;</Text>
           </View>
         </View>
 
         <View className='menu-group logout-group'>
           <View className='menu-item logout-item' onClick={handleLogout}>
-            <Text className='menu-icon'>🚪</Text>
+            <Text className='menu-icon'>&#128682;</Text>
             <Text className='menu-title logout-text'>退出登录</Text>
           </View>
         </View>

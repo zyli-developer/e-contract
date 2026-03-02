@@ -14,6 +14,7 @@ class SignTaskCreateRequest(BaseModel):
     template_id: int | None = None
     file_url: str | None = None
     remark: str | None = None
+    variables: dict | None = None
     participants: List[ParticipantRequest] = []
 
 
@@ -23,6 +24,8 @@ class ParticipantResponse(BaseModel):
     mobile: str
     status: int
     order_num: int
+    sign_time: str | None = None
+    seal_data: str | None = None
 
 
 class SignTaskResponse(BaseModel):
@@ -36,6 +39,7 @@ class SignTaskResponse(BaseModel):
     template_id: int | None = None
     creator_id: int
     remark: str | None = None
+    variables: dict | None = None
     create_time: str | None = None
     complete_time: str | None = None
     participants: List[ParticipantResponse] = []
@@ -48,19 +52,10 @@ class SignTaskStatistics(BaseModel):
     completedCount: int = 0
 
 
-class SignCodeRequest(BaseModel):
-    """签署验证码请求"""
-    pass  # task_id 从 URL path 获取
-
-
-class SignCodeVerifyRequest(BaseModel):
-    """签署验证码验证"""
-    code: str
-
-
 class SignRequest(BaseModel):
     """执行签署请求"""
     seal_id: int | None = None
+    variables: dict | None = None
 
 
 class RejectRequest(BaseModel):

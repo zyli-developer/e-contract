@@ -15,15 +15,14 @@ from app.services.sign_task_service import (
     verify_document_hash,
     validate_permission,
     record_view,
-    SIGN_CODE_SCENE,
 )
 from app.schemas.contract import ParticipantRequest
 
 
 def _make_task(id=1, name="test_contract", status=1, file_url="https://file.pdf",
                signed_file_url=None, file_hash="abc123", signed_file_hash=None,
-               template_id=None, creator_id=1, remark=None, create_time=None,
-               complete_time=None):
+               template_id=None, creator_id=1, remark=None, variables=None,
+               create_time=None, complete_time=None):
     task = MagicMock()
     task.id = id
     task.name = name
@@ -35,6 +34,7 @@ def _make_task(id=1, name="test_contract", status=1, file_url="https://file.pdf"
     task.template_id = template_id
     task.creator_id = creator_id
     task.remark = remark
+    task.variables = variables
     task.create_time = create_time or datetime.now()
     task.complete_time = complete_time
     return task
@@ -155,12 +155,25 @@ async def test_create_task_file_hash():
 @pytest.mark.anyio
 async def test_get_statistics():
     db = AsyncMock()
-    results = []
+
+    # _visible_task_ids 需要: (1) participant by member_id, (2) member lookup, (3) participant by mobile
+    p_by_id_result = MagicMock()
+    p_by_id_result.scalars.return_value.all.return_value = []
+    member_result = MagicMock()
+    member = MagicMock()
+    member.mobile = "13900139000"
+    member_result.scalar_one_or_none.return_value = member
+    p_by_mobile_result = MagicMock()
+    p_by_mobile_result.scalars.return_value.all.return_value = []
+
+    # statistics 本身需要 4 次 count 查询
+    stat_results = []
     for val in [10, 3, 5, 2]:
         r = MagicMock()
         r.scalar.return_value = val
-        results.append(r)
-    db.execute.side_effect = results
+        stat_results.append(r)
+
+    db.execute.side_effect = [p_by_id_result, member_result, p_by_mobile_result] + stat_results
 
     stats = await get_statistics(db, creator_id=1)
     assert stats["totalCount"] == 10
@@ -404,8 +417,11 @@ async def test_record_view():
         mock_log.assert_called_once()
 
 
-# ---- SIGN_CODE_SCENE ----
 
-def test_sign_code_scene_value():
-    assert SIGN_CODE_SCENE == 10
-    assert SIGN_CODE_SCENE not in (1, 2, 3)
+
+# ---- SMS 相关已移除 ----
+
+def test_no_sign_code_scene():
+    """SIGN_CODE_SCENE 已被移除"""
+    from app.services import sign_task_service
+    assert not hasattr(sign_task_service, "SIGN_CODE_SCENE")

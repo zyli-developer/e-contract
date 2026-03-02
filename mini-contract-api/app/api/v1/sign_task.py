@@ -3,10 +3,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.response import ApiResponse
 from app.database import get_db
-from app.dependencies import get_current_user_id
+from app.dependencies import get_current_user_id, require_landlord
 from app.schemas.contract import (
     RejectRequest,
-    SignCodeVerifyRequest,
     SignRequest,
     SignTaskCreateRequest,
 )
@@ -79,7 +78,7 @@ async def get_task(
 async def create_task(
     req: SignTaskCreateRequest,
     request: Request,
-    user_id: int = Depends(get_current_user_id),
+    user_id: int = Depends(require_landlord),
     db: AsyncSession = Depends(get_db),
 ):
     """创建合同"""
@@ -90,6 +89,7 @@ async def create_task(
         template_id=req.template_id,
         file_url=req.file_url,
         remark=req.remark,
+        variables=req.variables,
         participants=req.participants,
         ip=_client_ip(request),
         device=_client_device(request),
@@ -101,7 +101,7 @@ async def create_task(
 async def cancel_task(
     request: Request,
     id: int = Query(...),
-    user_id: int = Depends(get_current_user_id),
+    user_id: int = Depends(require_landlord),
     db: AsyncSession = Depends(get_db),
 ):
     """取消合同"""
@@ -116,7 +116,7 @@ async def cancel_task(
 @router.delete("/delete")
 async def delete_task(
     id: int = Query(...),
-    user_id: int = Depends(get_current_user_id),
+    user_id: int = Depends(require_landlord),
     db: AsyncSession = Depends(get_db),
 ):
     """删除合同"""
@@ -130,7 +130,7 @@ async def delete_task(
 async def initiate_signing(
     task_id: int,
     request: Request,
-    user_id: int = Depends(get_current_user_id),
+    user_id: int = Depends(require_landlord),
     db: AsyncSession = Depends(get_db),
 ):
     """发起签署（草稿 → 签署中）"""
@@ -140,39 +140,6 @@ async def initiate_signing(
         device=_client_device(request),
     )
     return ApiResponse.success(data=result)
-
-
-@router.post("/{task_id}/send-sign-code")
-async def send_sign_code(
-    task_id: int,
-    request: Request,
-    user_id: int = Depends(get_current_user_id),
-    db: AsyncSession = Depends(get_db),
-):
-    """发送签署验证码"""
-    await sign_task_service.send_sign_code(
-        db, task_id, user_id,
-        ip=_client_ip(request),
-        device=_client_device(request),
-    )
-    return ApiResponse.success(msg="验证码已发送")
-
-
-@router.post("/{task_id}/verify-sign-code")
-async def verify_sign_code(
-    task_id: int,
-    req: SignCodeVerifyRequest,
-    request: Request,
-    user_id: int = Depends(get_current_user_id),
-    db: AsyncSession = Depends(get_db),
-):
-    """验证签署验证码"""
-    await sign_task_service.verify_sign_code(
-        db, task_id, user_id, req.code,
-        ip=_client_ip(request),
-        device=_client_device(request),
-    )
-    return ApiResponse.success(msg="验证通过")
 
 
 @router.post("/{task_id}/sign")
@@ -187,6 +154,7 @@ async def execute_sign(
     result = await sign_task_service.execute_sign(
         db, task_id, user_id,
         seal_id=req.seal_id,
+        variables=req.variables,
         ip=_client_ip(request),
         device=_client_device(request),
     )

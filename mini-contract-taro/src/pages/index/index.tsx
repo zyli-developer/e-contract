@@ -1,12 +1,14 @@
 import Taro, { useDidShow } from '@tarojs/taro'
 import { View, Text } from '@tarojs/components'
 import { useAuth } from '@/hooks/useAuth'
+import { useAuthStore } from '@/store/useAuthStore'
 import { useContractStore } from '@/store/useContractStore'
 import { getStatistics } from '@/api/contracts'
 import './index.scss'
 
 export default function IndexPage() {
   const { isLoggedIn, requireAuth } = useAuth()
+  const { role } = useAuthStore()
   const { statistics, setStatistics } = useContractStore()
 
   useDidShow(() => {
@@ -68,18 +70,22 @@ export default function IndexPage() {
       <View className='bg-white p-[40px] mx-[32px] mt-[20px] rounded-[24px] shadow-sm'>
         <Text className='block text-[30px] font-extrabold text-[#333] mb-[32px]'>快捷操作</Text>
         <View className='action-grid'>
-          <View className='flex flex-col items-center' onClick={handleCreateContract}>
-            <View className='action-icon create'>
-              <Text className='text-white text-[40px] font-bold'>+</Text>
+          {role !== 'tenant' && (
+            <View className='flex flex-col items-center' onClick={handleCreateContract}>
+              <View className='action-icon create'>
+                <Text className='text-white text-[40px] font-bold'>+</Text>
+              </View>
+              <Text className='text-[24px] text-[#333] font-medium'>创建合同</Text>
             </View>
-            <Text className='text-[24px] text-[#333] font-medium'>创建合同</Text>
-          </View>
-          <View className='flex flex-col items-center' onClick={handleViewTemplates}>
-            <View className='action-icon template'>
-              <Text className='text-white text-[32px]'>T</Text>
+          )}
+          {role !== 'tenant' && (
+            <View className='flex flex-col items-center' onClick={handleViewTemplates}>
+              <View className='action-icon template'>
+                <Text className='text-white text-[32px]'>T</Text>
+              </View>
+              <Text className='text-[24px] text-[#333] font-medium'>模板市场</Text>
             </View>
-            <Text className='text-[24px] text-[#333] font-medium'>模板市场</Text>
-          </View>
+          )}
           <View
             className='flex flex-col items-center'
             onClick={() => {
@@ -110,7 +116,7 @@ export default function IndexPage() {
       {/* 未登录提示 */}
       {!isLoggedIn && (
         <View className='bg-white p-[48px] mx-[32px] mt-[20px] rounded-[24px] text-center shadow-sm'>
-          <Text className='block text-[26px] text-[#999] mb-[32px]'>登录后查看合同数据</Text>
+          <Text className='block text-[26px] text-[#999] mb-[32px]'>登录点点租约，开启安全签署体验</Text>
           <View
             className='inline-flex items-center justify-center px-[40px] py-[16px] bg-brand rounded-full'
             onClick={() => Taro.navigateTo({ url: '/pages/login/index' })}

@@ -1,40 +1,41 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.core.response import ApiResponse
+from app.core.security import rsa_decrypt
 from app.database import get_db
 from app.dependencies import get_current_user_id
 from app.schemas.auth import (
     LoginRequest,
     RefreshTokenRequest,
-    SendSmsCodeRequest,
-    SmsLoginRequest,
+    RegisterRequest,
 )
 from app.services import auth_service
-from app.services.sms_service import send_sms_code as sms_send
 
 router = APIRouter(prefix="/member/auth", tags=["认证"])
+
+
+@router.get("/public-key")
+async def get_public_key():
+    """获取 RSA 公钥（前端加密密码用）"""
+    return ApiResponse.success(data={"publicKey": settings.RSA_PUBLIC_KEY})
 
 
 @router.post("/login")
 async def login(req: LoginRequest, db: AsyncSession = Depends(get_db)):
     """密码登录"""
-    result = await auth_service.login_by_password(db, req.mobile, req.password)
+    password = rsa_decrypt(req.password)
+    result = await auth_service.login_by_password(db, req.mobile, password)
     return ApiResponse.success(data=result.model_dump())
 
 
-@router.post("/sms-login")
-async def sms_login(req: SmsLoginRequest, db: AsyncSession = Depends(get_db)):
-    """短信验证码登录（登录即注册）"""
-    result = await auth_service.login_by_sms(db, req.mobile, req.code)
+@router.post("/register")
+async def register(req: RegisterRequest, db: AsyncSession = Depends(get_db)):
+    """用户注册"""
+    password = rsa_decrypt(req.password)
+    result = await auth_service.register(db, req.mobile, password, req.nickname, req.role)
     return ApiResponse.success(data=result.model_dump())
-
-
-@router.post("/send-sms-code")
-async def send_sms_code(req: SendSmsCodeRequest):
-    """发送短信验证码"""
-    await sms_send(req.mobile, req.scene)
-    return ApiResponse.success()
 
 
 @router.post("/refresh-token")
