@@ -24,7 +24,7 @@ export default defineConfig(async (merge) => {
     defineConstants: {},
     copy: {
       patterns: [
-        { from: 'src/assets/', to: 'dist/assets/' },
+        { from: 'src/assets/tabbar/', to: 'dist/assets/tabbar/' },
       ],
       options: {},
     },
