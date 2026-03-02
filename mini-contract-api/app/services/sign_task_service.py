@@ -434,10 +434,11 @@ async def execute_sign(
         raise BusinessException(code=400, msg="您已拒签此合同")
 
     # 合并签署方提交的变量（如乙方身份证等）
+    # 必须创建新 dict，否则 SQLAlchemy 检测不到 JSON 列的变更
     if variables:
-        existing_vars = task.variables or {}
-        existing_vars.update(variables)
-        task.variables = existing_vars
+        merged = dict(task.variables or {})
+        merged.update(variables)
+        task.variables = merged
 
     # 更新签署方状态
     participant.status = 2  # 已签署

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import Taro, { useRouter } from '@tarojs/taro'
+import Taro, { useRouter, useDidShow } from '@tarojs/taro'
 import { View, Text, RichText, ScrollView, Image } from '@tarojs/components'
 import { useRequireAuth } from '@/hooks/useAuth'
 import { useAuthStore } from '@/store/useAuthStore'
@@ -14,6 +14,7 @@ import {
 } from '@/api/contracts'
 import { getTemplateDetail } from '@/api/templates'
 import { resolveStaticUrl } from '@/api/config'
+import { formatDate } from '@/utils/date'
 import './index.scss'
 
 const STATUS_MAP: Record<number, { text: string; type: string }> = {
@@ -51,6 +52,16 @@ export default function ContractDetailPage() {
       fetchDetail()
     }
   }, [contractId])
+
+  // 从签署页返回时刷新合同状态和数据
+  useDidShow(() => {
+    if (contractId) {
+      fetchDetail()
+      // 清除缓存的预览 HTML，下次打开预览时会用最新数据重新生成
+      setContractHtml('')
+      setShowPreview(false)
+    }
+  })
 
   const fetchDetail = async () => {
     try {
@@ -215,12 +226,12 @@ export default function ContractDetailPage() {
           <Text className='group-title'>基本信息</Text>
           <View className='cell-row'>
             <Text className='cell-title'>创建时间</Text>
-            <Text className='cell-extra'>{detail.create_time || '-'}</Text>
+            <Text className='cell-extra'>{detail.create_time ? formatDate(detail.create_time, 'YYYY-MM-DD HH:mm:ss') : '-'}</Text>
           </View>
           {detail.complete_time && (
             <View className='cell-row'>
               <Text className='cell-title'>完成时间</Text>
-              <Text className='cell-extra'>{detail.complete_time}</Text>
+              <Text className='cell-extra'>{formatDate(detail.complete_time, 'YYYY-MM-DD HH:mm:ss')}</Text>
             </View>
           )}
           {detail.remark && (
@@ -277,7 +288,7 @@ export default function ContractDetailPage() {
                     <View className='timeline-dot' />
                     <View className='timeline-content'>
                       <Text className='action'>{ACTION_LABEL[log.action] || log.action}</Text>
-                      <Text className='time'>{log.create_time}</Text>
+                      <Text className='time'>{log.create_time ? formatDate(log.create_time, 'YYYY-MM-DD HH:mm:ss') : ''}</Text>
                       {log.ip && <Text className='ip'>IP: {log.ip}</Text>}
                     </View>
                   </View>
@@ -313,7 +324,7 @@ export default function ContractDetailPage() {
                           </Text>
                         </View>
                         {p.sign_time && (
-                          <Text className='preview-signer-time'>签署时间：{p.sign_time}</Text>
+                          <Text className='preview-signer-time'>签署时间：{formatDate(p.sign_time, 'YYYY-MM-DD HH:mm:ss')}</Text>
                         )}
                         {p.seal_data && (
                           <Image className='preview-seal-img' src={resolveStaticUrl(p.seal_data)} mode='aspectFit' />

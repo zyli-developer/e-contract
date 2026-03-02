@@ -63,9 +63,12 @@ export default function ContractSignPage() {
     if (contractId) loadData()
   }, [contractId])
 
-  // 页面每次显示时刷新签名列表（从创建签名页返回时触发）
+  // 页面每次显示时刷新签名列表和实名认证状态（从创建签名页/实名认证页返回时触发）
   useDidShow(() => {
     loadSealsRef.current()
+    getUserInfo().then(info => {
+      setRealNameVerified(info.real_name_verified === 1)
+    }).catch(() => {})
   })
 
   const loadData = async () => {

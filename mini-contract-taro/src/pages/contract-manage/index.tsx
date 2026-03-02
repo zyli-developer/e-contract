@@ -4,6 +4,7 @@ import { View, Text } from '@tarojs/components'
 import { useAuth } from '@/hooks/useAuth'
 import { usePagination } from '@/hooks/usePagination'
 import { getContractList } from '@/api/contracts'
+import { formatDate } from '@/utils/date'
 import './index.scss'
 
 const STATUS_TABS = [
@@ -123,7 +124,7 @@ export default function ContractManagePage() {
                 <View className='info-row'>
                   <Text className='row-icon'>🕐</Text>
                   <Text className='label'>创建时间</Text>
-                  <Text className='value'>{item.create_time || '-'}</Text>
+                  <Text className='value'>{item.create_time ? formatDate(item.create_time, 'YYYY-MM-DD HH:mm:ss') : '-'}</Text>
                 </View>
               </View>
             </View>

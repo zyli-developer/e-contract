@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.response import ApiResponse
 from app.database import get_db
-from app.dependencies import require_landlord
+from app.dependencies import get_current_user_id, require_landlord
 from app.services import template_service
 
 router = APIRouter(prefix="/seal/seal-template", tags=["合同模板"])
@@ -26,10 +26,10 @@ async def search_templates(
 @router.get("/get")
 async def get_template(
     id: int = Query(...),
-    user_id: int = Depends(require_landlord),
+    user_id: int = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
 ):
-    """模板详情"""
+    """模板详情（租客签署时也需要查看合同内容）"""
     result = await template_service.get_template_detail(db, id)
     return ApiResponse.success(data=result)
 
